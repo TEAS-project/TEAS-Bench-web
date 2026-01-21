@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-slate-800 border border-slate-700 rounded-lg p-4 ${className}`}>
+  <div className={`bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4 ${className}`}>
     {children}
   </div>
 );
@@ -19,12 +19,12 @@ const Card = ({ children, className = "" }) => (
 const StatCard = ({ title, value, unit, subtext, icon: Icon }) => (
   <Card>
     <div className="flex justify-between items-start mb-2">
-      <span className="text-slate-400 text-sm font-medium">{title}</span>
-      {Icon && <Icon className="text-blue-400 w-5 h-5" />}
+      <span className="text-slate-400 text-xs sm:text-sm font-medium">{title}</span>
+      {Icon && <Icon className="text-blue-400 w-4 h-4 sm:w-5 sm:h-5" />}
     </div>
     <div className="flex items-baseline gap-1">
-      <span className="text-2xl font-bold text-slate-100">{value}</span>
-      <span className="text-sm text-slate-400 font-medium">{unit}</span>
+      <span className="text-xl sm:text-2xl font-bold text-slate-100">{value}</span>
+      <span className="text-xs sm:text-sm text-slate-400 font-medium">{unit}</span>
     </div>
     {subtext && <div className="text-xs text-slate-500 mt-1">{subtext}</div>}
   </Card>
@@ -33,14 +33,14 @@ const StatCard = ({ title, value, unit, subtext, icon: Icon }) => (
 const ScenarioButton = ({ active, onClick, label, desc }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left p-3 rounded-md border transition-all ${
+    className={`w-full text-left p-2 sm:p-3 rounded-md border transition-all ${
       active
         ? 'bg-blue-900/30 border-blue-500 text-blue-100'
         : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
     }`}
   >
-    <div className="font-semibold text-sm">{label}</div>
-    <div className="text-xs opacity-70 mt-1">{desc}</div>
+    <div className="font-semibold text-xs sm:text-sm">{label}</div>
+    <div className="text-xs opacity-70 mt-1 hidden sm:block">{desc}</div>
   </button>
 );
 
@@ -953,38 +953,38 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
       {/* Top Navigation Bar */}
-      <nav className="bg-slate-800 border-b border-slate-700 px-6 py-3">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <nav className="bg-slate-800 border-b border-slate-700 px-4 sm:px-6 py-3">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+            <span className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
               TEAS
             </span>
-            <span className="text-xs text-slate-400 hidden sm:inline">Tracking Evolving AI and Systems</span>
+            <span className="text-xs text-slate-400 hidden md:inline">Tracking Evolving AI and Systems</span>
           </div>
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 text-xs sm:text-sm">
             <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">Mixture-of-Experts</a>
-            <span className="text-slate-500 cursor-not-allowed">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
-            <span className="text-slate-500 cursor-not-allowed">Test-time Scaling <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <span className="text-slate-500 cursor-not-allowed hidden md:inline">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <span className="text-slate-500 cursor-not-allowed hidden lg:inline">Test-time Scaling <span className="text-xs text-slate-600">(Coming Soon)</span></span>
             <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-slate-800 to-slate-900 py-16 px-6">
+      <div className="bg-gradient-to-b from-slate-800 to-slate-900 py-8 sm:py-12 md:py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-8 pb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400" style={{ lineHeight: '1.2' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 md:mb-8 pb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400" style={{ lineHeight: '1.2' }}>
             Tracking Evolving AI and Systems
           </h1>
-          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto px-2">
             Uniting Models, Algorithms, and System Innovators with Top-Down Evolutionary Benchmarks.
           </p>
         </div>
       </div>
 
       {/* Our Goal Section */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 mb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-8 sm:mb-12">
           <h2 className="text-2xl font-bold text-slate-100 mb-4">Our Goal</h2>
           <p className="text-slate-300 leading-relaxed">
             We aim to create a suite of next-generation benchmarks that track the fast-evolving landscape of AI, 
@@ -1002,23 +1002,23 @@ export default function App() {
       </div>
 
       {/* Dashboard Section */}
-      <div className="max-w-7xl mx-auto px-6 pb-6" id="moe">
-        <header className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Activity className="w-8 h-8 text-blue-500" />
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6" id="moe">
+        <header className="mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+            <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
+            <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
               Mixture-of-Experts
             </h1>
             <a 
               href="https://github.com/Auto-CAP/MoE-CAP" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full text-sm text-white transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full text-xs sm:text-sm text-white transition-colors"
             >
-              <Github className="w-4 h-4" />
+              <Github className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>GitHub</span>
             </a>
-            <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400">
+            <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400 hidden sm:inline">
               {MODEL_CONFIG.name}
             </span>
           </div>
@@ -1036,7 +1036,7 @@ export default function App() {
           </div>
           
           {/* Controls Row - Context Size and Parameters inline */}
-          <div className="grid grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4">
             {/* Context Size */}
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1">Context Size</label>
@@ -1103,7 +1103,7 @@ export default function App() {
           </div>
           
           {/* Line Legend - below controls */}
-          <div className="flex flex-wrap items-center gap-4 mb-2 pl-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 pl-2 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-8 border-t-2 border-dashed border-blue-500"></div>
               <span className="text-xs text-slate-300">BS=1: <span className="text-blue-400 font-semibold">{chartData.bwBS1?.toFixed(0)} GB/s</span></span>
@@ -1121,7 +1121,7 @@ export default function App() {
           </div>
           
           {/* Point Legend Box - top right */}
-          <div className="absolute top-16 right-6 bg-slate-800/90 border border-slate-600 rounded px-3 py-2 z-10">
+          <div className="hidden sm:block absolute top-16 right-4 sm:right-6 bg-slate-800/90 border border-slate-600 rounded px-2 sm:px-3 py-2 z-10">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <span className="text-xs text-slate-300">Peak Bandwidth (Memory)</span>
@@ -1132,18 +1132,19 @@ export default function App() {
             </div>
           </div>
           
-          <ResponsiveContainer width="100%" height={550}>
-            <ScatterChart margin={{ top: 20, right: 30, left: 60, bottom: 60 }}>
+          <div className="h-[350px] sm:h-[450px] md:h-[500px] lg:h-[550px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 10, right: 10, left: 50, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis 
                 dataKey="power" 
                 type="number"
                 domain={[5, 15000]} 
                 scale="log"
-                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                tick={{ fill: '#94a3b8', fontSize: 9 }}
                 ticks={[10, 50, 100, 300, 500, 1000, 3000, 10000]}
                 tickFormatter={(value) => value >= 1000 ? `${value/1000}k` : value}
-                label={{ value: 'Power (W)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }}
+                label={{ value: 'Power (W)', position: 'insideBottom', offset: -10, fill: '#94a3b8', fontSize: 11 }}
                 allowDataOverflow={false}
                 name="power"
               />
@@ -1153,10 +1154,10 @@ export default function App() {
                 stroke="#94a3b8"
                 scale="log"
                 domain={[10, Math.max(30000, chartData.fullyActivatedBw * 1.5)]}
-                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                tick={{ fill: '#94a3b8', fontSize: 9 }}
                 ticks={[10, 50, 100, 500, 1000, 5000, 10000, 30000]}
                 tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
-                label={{ value: 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -40, fill: '#94a3b8' }}
+                label={{ value: 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
                 allowDataOverflow={false}
                 name="bandwidth"
               />
@@ -1238,6 +1239,7 @@ export default function App() {
               
             </ScatterChart>
           </ResponsiveContainer>
+          </div>
         </Card>
 
         {/* Chart 2: CAP Radar Plot */}
@@ -1271,7 +1273,7 @@ export default function App() {
             </div>
             
             {/* Config Selectors */}
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1">Config 1</label>
                 <select 
@@ -1314,7 +1316,7 @@ export default function App() {
             </div>
 
             {/* Legend for selected configs */}
-            <div className="flex flex-wrap gap-4 mb-4 px-2">
+            <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 px-2">
               {capRadarData.selectedConfigs.map(configKey => {
                 const config = CAP_CONFIGS[configKey];
                 return (
@@ -1326,8 +1328,9 @@ export default function App() {
               })}
             </div>
 
-            <ResponsiveContainer width="100%" height={400}>
-              <RadarChart data={capRadarData.radarData} margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+            <div className="h-[280px] sm:h-[350px] md:h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={capRadarData.radarData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
                 <PolarGrid stroke="#475569" />
                 <PolarAngleAxis 
                   dataKey="metric" 
@@ -1353,9 +1356,6 @@ export default function App() {
                     />
                   );
                 })}
-                <Legend 
-                  wrapperStyle={{ bottom: -10, color: '#ffffff' }}
-                />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                   content={({ active, payload, label }) => {
@@ -1391,10 +1391,11 @@ export default function App() {
                 />
               </RadarChart>
             </ResponsiveContainer>
+            </div>
 
             {/* Raw Values Table */}
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full text-xs">
+            <div className="mt-8 sm:mt-20 md:mt-12 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <table className="w-full text-xs min-w-[500px] sm:min-w-0">
                 <thead>
                   <tr className="border-b border-slate-700">
                     <th className="text-left py-2 px-2 text-slate-400">Config</th>
