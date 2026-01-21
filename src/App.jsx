@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell,
+  ScatterChart, ZAxis
 } from 'recharts';
 import {
-  Activity, Server, Settings, Cpu, Info, Zap, Percent
+  Activity, Server, Settings, Cpu, Info, Zap, Percent, Github
 } from 'lucide-react';
 
 const Card = ({ children, className = "" }) => (
@@ -42,241 +44,533 @@ const ScenarioButton = ({ active, onClick, label, desc }) => (
   </button>
 );
 
+// LongBench v2 benchmark data (SGLang) - defined outside component for stability
+const LONGBENCH_CONFIGS = {
+  // Qwen3-235B-A22B - Accuracy: 50.1%
+  'qwen3-235b-ep-tp-16h20': {
+    label: 'Qwen3-235B-A22B / BF16 / 16xH20 (EP+TP)',
+    model: 'Qwen3-235B-A22B',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 50.1,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.06,
+    throughput: 1490,
+    batchSize: 87,
+    color: '#3b82f6'  // Blue
+  },
+  'qwen3-235b-ep-tp-8h20': {
+    label: 'Qwen3-235B-A22B / BF16 / 8xH20 (EP+TP)',
+    model: 'Qwen3-235B-A22B',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 50.1,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.04,
+    throughput: 1241,
+    batchSize: 45,
+    color: '#22c55e'  // Green
+  },
+  'qwen3-235b-tp-16h20': {
+    label: 'Qwen3-235B-A22B / BF16 / 16xH20 (TP)',
+    model: 'Qwen3-235B-A22B',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (TP)',
+    accuracy: 50.1,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.06,
+    throughput: 1503,
+    batchSize: 88,
+    color: '#f97316'  // Orange
+  },
+  'qwen3-235b-tp-8h20': {
+    label: 'Qwen3-235B-A22B / BF16 / 8xH20 (TP)',
+    model: 'Qwen3-235B-A22B',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (TP)',
+    accuracy: 50.1,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.04,
+    throughput: 1159,
+    batchSize: 44,
+    color: '#a855f7'  // Purple
+  },
+  // Qwen3-30B-A3B - Accuracy: 42.5%
+  'qwen3-30b-ep-tp-8h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 8xH20 (EP+TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 42.5,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.05,
+    throughput: 5283,
+    batchSize: 241,
+    color: '#ef4444'  // Red
+  },
+  'qwen3-30b-ep-tp-4h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 4xH20 (EP+TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '4xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 42.5,
+    cost: 2000,  // 4 GPUs × 500W
+    tpot: 0.04,
+    throughput: 5069,
+    batchSize: 218,
+    color: '#06b6d4'  // Cyan
+  },
+  'qwen3-30b-ep-tp-2h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 2xH20 (EP+TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '2xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 42.5,
+    cost: 1000,  // 2 GPUs × 500W
+    tpot: 0.04,
+    throughput: 2186,
+    batchSize: 85,
+    color: '#eab308'  // Yellow
+  },
+  'qwen3-30b-tp-8h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 8xH20 (TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (TP)',
+    accuracy: 42.5,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.05,
+    throughput: 5277,
+    batchSize: 241,
+    color: '#ec4899'  // Pink
+  },
+  'qwen3-30b-tp-4h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 4xH20 (TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '4xH20',
+    system: 'SGLang (TP)',
+    accuracy: 42.5,
+    cost: 2000,  // 4 GPUs × 500W
+    tpot: 0.04,
+    throughput: 5072,
+    batchSize: 218,
+    color: '#14b8a6'  // Teal
+  },
+  'qwen3-30b-tp-2h20': {
+    label: 'Qwen3-30B-A3B / BF16 / 2xH20 (TP)',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '2xH20',
+    system: 'SGLang (TP)',
+    accuracy: 42.5,
+    cost: 1000,  // 2 GPUs × 500W
+    tpot: 0.04,
+    throughput: 2197,
+    batchSize: 85,
+    color: '#8b5cf6'  // Violet
+  },
+  // DeepSeek-V2.5 - Accuracy: 53.7%
+  'deepseek-v2.5-ep-tp-16h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 16xH20 (EP+TP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 53.7,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.10,
+    throughput: 549,
+    batchSize: 57,
+    color: '#f43f5e'  // Rose
+  },
+  'deepseek-v2.5-ep-tp-8h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 8xH20 (EP+TP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (EP+TP)',
+    accuracy: 53.7,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.07,
+    throughput: 383,
+    batchSize: 25,
+    color: '#84cc16'  // Lime
+  },
+  'deepseek-v2.5-tp-16h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 16xH20 (TP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (TP)',
+    accuracy: 53.7,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.10,
+    throughput: 595,
+    batchSize: 57,
+    color: '#0ea5e9'  // Sky
+  },
+  'deepseek-v2.5-tp-8h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 8xH20 (TP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (TP)',
+    accuracy: 53.7,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.05,
+    throughput: 500,
+    batchSize: 25,
+    color: '#d946ef'  // Fuchsia
+  },
+  'deepseek-v2.5-dp-ep-16h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 16xH20 (DP+EP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (DP+EP)',
+    accuracy: 53.7,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.11,
+    throughput: 1028,
+    batchSize: 112,
+    color: '#64748b'  // Slate
+  },
+  'deepseek-v2.5-dp-ep-8h20': {
+    label: 'DeepSeek-V2.5 / BF16 / 8xH20 (DP+EP)',
+    model: 'DeepSeek-V2.5',
+    precision: 'BF16',
+    gpu: '8xH20',
+    system: 'SGLang (DP+EP)',
+    accuracy: 53.7,
+    cost: 4000,  // 8 GPUs × 500W
+    tpot: 0.08,
+    throughput: 602,
+    batchSize: 46,
+    color: '#fb7185'  // Rose light
+  },
+  // DeepSeek-R1 - Accuracy: 58.3%
+  'deepseek-r1-dp-ep-16h20': {
+    label: 'DeepSeek-R1 / BF16 / 16xH20 (DP+EP)',
+    model: 'DeepSeek-R1',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (DP+EP)',
+    accuracy: 58.3,
+    cost: 8000,  // 16 GPUs × 500W
+    tpot: 0.11,
+    throughput: 1401,
+    batchSize: 160,
+    color: '#10b981'  // Emerald
+  },
+  'deepseek-r1-tp-ep-16h20': {
+    label: 'DeepSeek-R1 / BF16 / 16xH20 (TP+EP)',
+    model: 'DeepSeek-R1',
+    precision: 'BF16',
+    gpu: '16xH20',
+    system: 'SGLang (TP+EP)',
+    accuracy: 58.3,
+    cost: 8000,
+    tpot: 0.10,
+    throughput: 427,
+    batchSize: 41,
+    color: '#dc2626'
+  },
+};
+
+// GSM8K benchmark data - defined outside component for stability
+const GSM8K_CONFIGS = {
+  'qwen3-30b-a3b-5xa5000': {
+    label: 'Qwen3-30B-A3B / BF16 / 5xRTX A5000',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '5xRTX A5000',
+    accuracy: 81.12,
+    cost: 15342.20,
+    tpot: 0.05,
+    throughput: 1402.01,
+    color: '#3b82f6'
+  },
+  'qwen1.5-moe-1xa6000': {
+    label: 'Qwen1.5-MoE-A2.7B-Chat / BF16 / 1xRTX A6000',
+    model: 'Qwen1.5-MoE-A2.7B-Chat',
+    precision: 'BF16',
+    gpu: '1xRTX A6000',
+    accuracy: 45.72,
+    cost: 7158.92,
+    tpot: 0.03,
+    throughput: 599.35,
+    color: '#22c55e'
+  },
+  'qwen3-235b-fp8-2xh200': {
+    label: 'Qwen3-235B-A22B-Thinking / FP8 / 2xH200',
+    model: 'Qwen3-235B-A22B-Thinking-2507-FP8',
+    precision: 'FP8',
+    gpu: '2xH200',
+    accuracy: 68.84,
+    cost: 104052.07,
+    tpot: 0.02,
+    throughput: 1136.77,
+    color: '#f97316'
+  },
+  'qwen3-235b-bf16-4xh200': {
+    label: 'Qwen3-235B-A22B-Thinking / BF16 / 4xH200',
+    model: 'Qwen3-235B-A22B-Thinking-2507',
+    precision: 'BF16',
+    gpu: '4xH200',
+    accuracy: 70.28,
+    cost: 195252.11,
+    tpot: 0.02,
+    throughput: 1206.32,
+    color: '#a855f7'
+  },
+  'qwen3-235b-bf16-8xh100': {
+    label: 'Qwen3-235B-A22B / BF16 / 8xH100',
+    model: 'Qwen3-235B-A22B',
+    precision: 'BF16',
+    gpu: '8xH100',
+    accuracy: 71.19,
+    cost: 344657.14,
+    tpot: 0.03,
+    throughput: 1694.30,
+    color: '#ef4444'
+  },
+  'qwen3-30b-instruct-4xa6000': {
+    label: 'Qwen3-30B-A3B-Instruct / BF16 / 4xRTX A6000',
+    model: 'Qwen3-30B-A3B-Instruct-2507',
+    precision: 'BF16',
+    gpu: '4xRTX A6000',
+    accuracy: 53.30,
+    cost: 21600.27,
+    tpot: 0.02,
+    throughput: 638.03,
+    color: '#60a5fa'
+  },
+  'qwen3-30b-thinking-4xa6000': {
+    label: 'Qwen3-30B-A3B-Thinking / BF16 / 4xRTX A6000',
+    model: 'Qwen3-30B-A3B-Thinking-2507',
+    precision: 'BF16',
+    gpu: '4xRTX A6000',
+    accuracy: 69.29,
+    cost: 21600.54,
+    tpot: 0.04,
+    throughput: 1701.41,
+    color: '#4ade80'
+  },
+  'qwen3-30b-4xa6000': {
+    label: 'Qwen3-30B-A3B / BF16 / 4xRTX A6000',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '4xRTX A6000',
+    accuracy: 80.67,
+    cost: 21600.69,
+    tpot: 0.03,
+    throughput: 1417.49,
+    color: '#9333ea'
+  },
+  'qwen3-30b-2xa100': {
+    label: 'Qwen3-30B-A3B / BF16 / 2xA100',
+    model: 'Qwen3-30B-A3B',
+    precision: 'BF16',
+    gpu: '2xA100',
+    accuracy: 80.97,
+    cost: 54380.91,
+    tpot: 0.01,
+    throughput: 1806.09,
+    color: '#f87171'
+  },
+};
+
 export default function App() {
   // --- Model Configurations ---
+  // Based on reference table with correct activation sizes
+  // Required BW = (activationGB + kvCacheGB) / TPOT
+  // Reference values at BS=1, TPOT=0.1s from benchmark table
   const MODEL_CONFIGS = {
-    'qwen3': {
-      name: 'Qwen3-30B-A3B',
-      d_model: 2048,
-      n_heads: 32,
-      n_kv: 4,
-      d_head: 128,
-      L: 48,
-      d_ff: 768,
-      E: 128,
-      k: 8,
-      V: 151936,
-      P: 2
+    'mixtral-8x7b': {
+      name: 'Mixtral-8x7B',
+      // Architecture from reference table
+      L: 32,              // n_layer
+      d_model: 4096,      // hidden_size
+      n_heads: 32,        // n_attn_head
+      d_head: 128,        // d_head
+      n_kv: 8,            // n_kv_head
+      E: 8,               // num experts
+      k: 2,               // top-k
+      P: 2,               // bytes per param (BF16)
+      // Params from table (BS=1, TPOT=0.1s, SeqLen=5000)
+      activationB: 12.9,  // Activation params in billions
+      totalB: 46.7,       // Total params in billions (for dense/fully-activated)
+      kvPerToken: 0.000065536, // KV size per token in GB
+      refSeqLen: 5000,    // Reference sequence length
+      refBwBS1: 264.5536, // Reference BW at BS=1, TPOT=0.1s (5K)
+      refBwBS32: 926.3536, // Reference BW at BS=32, TPOT=0.1s
+      refBwBS64: 1152.99, // Fully activated + KV cache for BS=64
+      refBwBS128: 1362.71, // Fully activated + KV cache for BS=128
+      denseRefBw: 946.5536, // Fixed All Experts reference BW (5K)
+      // 14K context values (same ratio as 5K w.r.t BS32)
+      refBwBS1_14k: 276.35008, // Reference BW at BS=1, TPOT=0.1s (14K)
+      refBwBS32_14k: 938.15008, // Reference BW at BS=32, TPOT=0.1s (14K)
+      refBwBS64_14k: 938.15008 * (1152.99 / 926.3536), // ~1167.62 (14K)
+      refBwBS128_14k: 938.15008 * (1362.71 / 926.3536), // ~1380.07 (14K)
+      denseRefBw_14k: 958.35008, // All Experts reference BW (14K)
     },
-    'deepseek-v2-lite': {
-      name: 'Deepseek-V2-Lite',
-      d_model: 2048,
-      n_heads: 32,
-      n_kv: 4,
+    'mixtral-8x22b': {
+      name: 'Mixtral-8x22B',
+      L: 56,
+      d_model: 6144,
+      n_heads: 48,
       d_head: 128,
-      L: 48,
-      d_ff: 768,
-      E: 128,
-      k: 8,
-      V: 151936,
+      n_kv: 8,
+      E: 8,
+      k: 2,
       P: 2,
-      expertSize: 0.229,
-      restShared: 1.024,
-      smbuMap: {
-        1: 0.345163434301608,
-        4: 0.386,
-        8: 0.406,
-        16: 0.429,
-        32: 0.478644231191122,
-        64: 0.396806645718611,
-        128: 0.325042264414248
-      }
+      activationB: 39,
+      totalB: 141,
+      kvPerToken: 0.000114688,
+      refSeqLen: 5000,
+      refBwBS1: 791.4688,
+      refBwBS32: 2804.2688, // Reference BW at BS=32, TPOT=0.1s
+      refBwBS64: 3192.74, // Fully activated + KV cache for BS=64
+      refBwBS128: 3559.74, // Fully activated + KV cache for BS=128
+      denseRefBw: 2831.4688, // Fixed All Experts reference BW (5K)
+      // 14K context values (same ratio as 5K w.r.t BS32)
+      refBwBS1_14k: 812.11264, // Reference BW at BS=1, TPOT=0.1s (14K)
+      refBwBS32_14k: 2824.91264, // Reference BW at BS=32, TPOT=0.1s (14K)
+      refBwBS64_14k: 2824.91264 * (3192.74 / 2804.2688), // ~3216.20 (14K)
+      refBwBS128_14k: 2824.91264 * (3559.74 / 2804.2688), // ~3585.79 (14K)
+      denseRefBw_14k: 2852.11264, // All Experts reference BW (14K)
     },
     'qwen1.5-moe': {
       name: 'Qwen1.5-MoE',
+      L: 24,
       d_model: 2048,
-      n_heads: 32,
-      n_kv: 4,
+      n_heads: 16,
       d_head: 128,
-      L: 48,
-      d_ff: 768,
-      E: 128,
-      k: 8,
-      V: 151936,
+      n_kv: 16,
+      E: 60,
+      k: 4,
       P: 2,
-      expertSize: 0.207,
-      restShared: 1.871,
-      smbuMap: {
-        1: 0.404936278087575,
-        4: 0.423,
-        8: 0.442,
-        16: 0.467870755068306,
-        32: 0.469105695655845,
-        64: 0.387568270405655,
-        128: 0.320088529302412
-      }
+      activationB: 2.7,
+      totalB: 14.3,
+      kvPerToken: 0.000098304,
+      refSeqLen: 5000,
+      refBwBS1: 63.8304,
+      refBwBS32: 241.4304, // Reference BW at BS=32, TPOT=0.1s
+      refBwBS64: 241.4304 * 1.10133, // ~265.88 GB/s
+      refBwBS128: 241.4304 * 1.2473, // ~301.16 GB/s
+      denseRefBw: 289.8304, // Fixed All Experts reference BW (5K)
+      // 14K context values (same ratio as 5K w.r.t BS32)
+      refBwBS1_14k: 81.52512, // Reference BW at BS=1, TPOT=0.1s (14K)
+      refBwBS32_14k: 259.12512, // Reference BW at BS=32, TPOT=0.1s (14K)
+      refBwBS64_14k: 259.12512 * 1.10133, // ~285.38 (14K)
+      refBwBS128_14k: 259.12512 * 1.2473, // ~323.24 (14K)
+      denseRefBw_14k: 307.52512, // All Experts reference BW (14K)
     },
     'deepseek-r1': {
-      name: 'Deepseek-R1 (Fully Activated)',
-      d_model: 2048,
-      n_heads: 32,
-      n_kv: 4,
-      d_head: 128,
-      L: 48,
-      d_ff: 768,
+      name: 'DeepSeek-R1',
+      L: 61,
+      d_model: 7168,
+      n_heads: 128,
+      d_head: 192,
+      n_kv: 128,
       E: 256,
       k: 8,
-      V: 151936,
       P: 2,
-      expertSize: 0.229,
-      restShared: 0.512,
-      smbuMap: {
-        1: 0.668,
-        4: 0.742,
-        8: 0.779,
-        16: 0.824,
-        32: 0.920,
-        64: 0.762,
-        128: 0.625
-      }
+      activationB: 37,
+      totalB: 671,
+      kvPerToken: 0.002998272,
+      refSeqLen: 5000,
+      refBwBS1: 1537.22816, // Reference BW at BS=1, TPOT=0.1s (5K) - estimated
+      refBwBS32: 6249.4272, // Reference BW at BS=32, TPOT=0.1s
+      refBwBS64: 6249.4272 / 0.875583, // ~7137.26 GB/s
+      refBwBS128: 6249.4272 * 1.880657, // ~11752.35 GB/s
+      denseRefBw: 13719.8272, // Fixed All Experts reference BW (5K) - estimated
+      // 14K context values (same ratio as 5K w.r.t BS32)
+      refBwBS1_14k: 1579.51616, // Reference BW at BS=1, TPOT=0.1s (14K)
+      refBwBS32_14k: 6789.11616, // Reference BW at BS=32, TPOT=0.1s (14K)
+      refBwBS64_14k: 6789.11616 * 1.1421, // ~7754.0 (14K)
+      refBwBS128_14k: 6789.11616 * 1.8807, // ~12766.5 (14K)
+      denseRefBw_14k: 14259.51616, // All Experts reference BW (14K)
     },
-    'mixtral-8x22b': {
-      name: 'Mixtral-8x22B (Fully Activated)',
+    // Estimated models (not in reference table)
+    'deepseek-v2-lite': {
+      name: 'Deepseek-V2-Lite',
+      L: 27,
+      d_model: 2048,
+      n_heads: 16,
+      d_head: 128,
+      n_kv: 16,
+      E: 64,
+      k: 6,
+      P: 2,
+      activationB: 2.4,
+      totalB: 16, // ~16B dense equivalent
+      kvPerToken: 0.000110592,
+      refSeqLen: 5000,
+      refBwBS1: 77.72, // 19.43 * 4 at TPOT=0.1s
+      refBwBS32: 486.96, // 121.74 * 4
+      refBwBS64: 565.48, // 141.37 * 4
+      refBwBS128: 628.68, // 157.17 * 4
+      denseRefBw: 325.53, // 16B dense + KV cache (5000 tokens) at TPOT=0.1s
+    },
+    'qwen3': {
+      name: 'Qwen3-30B-A3B',
+      L: 48,
       d_model: 2048,
       n_heads: 32,
-      n_kv: 4,
       d_head: 128,
-      L: 48,
-      d_ff: 768,
-      E: 8,
-      k: 2,
-      V: 151936,
+      n_kv: 4,
+      E: 128,
+      k: 8,
       P: 2,
-      expertSize: 2.861,
-      restShared: 2.355,
-      smbuMap: {
-        1: 0.663,
-        4: 0.737,
-        8: 0.774,
-        16: 0.819,
-        32: 0.913,
-        64: 0.758,
-        128: 0.622
-      }
-    }
+      activationB: 3,
+      totalB: 30,
+      kvPerToken: 0.000098304,
+      refSeqLen: 5000,
+      refBwBS1: null,
+      denseBwBS1: null,
+    },
   };
 
   // --- State ---
-  const [selectedModel, setSelectedModel] = useState('deepseek-v2-lite');
-  const [scenario, setScenario] = useState('4k-256');
+  const [selectedModel, setSelectedModel] = useState('deepseek-r1');
+  const [scenario, setScenario] = useState('5k-ref');
   
-  // Inputs
+  // Inputs - default to 5k reference (4750 + 250 = 5000)
   const [batchSize, setBatchSize] = useState(1);
-  const [inputLen, setInputLen] = useState(4000);
-  const [outputLen, setOutputLen] = useState(256);
-  const [sloMs, setSloMs] = useState(50); // Target Time Per Output Token (ms)
+  const [inputLen, setInputLen] = useState(4750);
+  const [outputLen, setOutputLen] = useState(250);
+  const [sloMs, setSloMs] = useState(100); // Target Time Per Output Token (ms) - default 100ms = 0.1s
   const [hardwareBw, setHardwareBw] = useState(768); // Default A6000
   const [smbu, setSmbu] = useState(16.33); // Fixed S-MBU
   const [numGpus, setNumGpus] = useState(1); // Supply side GPU count
 
   // CAP Radar Chart selections (3 configs)
-  const [capConfig1, setCapConfig1] = useState('qwen3-30b-a3b-5xa5000');
-  const [capConfig2, setCapConfig2] = useState('qwen1.5-moe-1xa6000');
-  const [capConfig3, setCapConfig3] = useState('qwen3-235b-bf16-8xh100');
-  const [capDataset, setCapDataset] = useState('gsm8k');
+  const [capConfig1, setCapConfig1] = useState('qwen3-235b-ep-tp-16h20');
+  const [capConfig2, setCapConfig2] = useState('qwen3-30b-ep-tp-8h20');
+  const [capConfig3, setCapConfig3] = useState('deepseek-r1-dp-ep-16h20');
+  const [capDataset, setCapDataset] = useState('longbench-v2');
 
-  // CAP benchmark data (Model-Precision-GPU configurations)
-  const CAP_CONFIGS = {
-    'qwen3-30b-a3b-5xa5000': {
-      label: 'Qwen3-30B-A3B / BF16 / 5xRTX A5000',
-      model: 'Qwen3-30B-A3B',
-      precision: 'BF16',
-      gpu: '5xRTX A5000',
-      accuracy: 81.12,
-      cost: 15342.20,
-      tpot: 0.05,
-      throughput: 1402.01,
-      color: '#3b82f6'
-    },
-    'qwen1.5-moe-1xa6000': {
-      label: 'Qwen1.5-MoE-A2.7B-Chat / BF16 / 1xRTX A6000',
-      model: 'Qwen1.5-MoE-A2.7B-Chat',
-      precision: 'BF16',
-      gpu: '1xRTX A6000',
-      accuracy: 45.72,
-      cost: 7158.92,
-      tpot: 0.03,
-      throughput: 599.35,
-      color: '#22c55e'
-    },
-    'qwen3-235b-fp8-2xh200': {
-      label: 'Qwen3-235B-A22B-Thinking / FP8 / 2xH200',
-      model: 'Qwen3-235B-A22B-Thinking-2507-FP8',
-      precision: 'FP8',
-      gpu: '2xH200',
-      accuracy: 68.84,
-      cost: 104052.07,
-      tpot: 0.02,
-      throughput: 1136.77,
-      color: '#f97316'
-    },
-    'qwen3-235b-bf16-4xh200': {
-      label: 'Qwen3-235B-A22B-Thinking / BF16 / 4xH200',
-      model: 'Qwen3-235B-A22B-Thinking-2507',
-      precision: 'BF16',
-      gpu: '4xH200',
-      accuracy: 70.28,
-      cost: 195252.11,
-      tpot: 0.02,
-      throughput: 1206.32,
-      color: '#a855f7'
-    },
-    'qwen3-235b-bf16-8xh100': {
-      label: 'Qwen3-235B-A22B / BF16 / 8xH100',
-      model: 'Qwen3-235B-A22B',
-      precision: 'BF16',
-      gpu: '8xH100',
-      accuracy: 71.19,
-      cost: 344657.14,
-      tpot: 0.03,
-      throughput: 1694.30,
-      color: '#ef4444'
-    },
-    'qwen3-30b-instruct-4xa6000': {
-      label: 'Qwen3-30B-A3B-Instruct / BF16 / 4xRTX A6000',
-      model: 'Qwen3-30B-A3B-Instruct-2507',
-      precision: 'BF16',
-      gpu: '4xRTX A6000',
-      accuracy: 53.30,
-      cost: 21600.27,
-      tpot: 0.02,
-      throughput: 638.03,
-      color: '#60a5fa'
-    },
-    'qwen3-30b-thinking-4xa6000': {
-      label: 'Qwen3-30B-A3B-Thinking / BF16 / 4xRTX A6000',
-      model: 'Qwen3-30B-A3B-Thinking-2507',
-      precision: 'BF16',
-      gpu: '4xRTX A6000',
-      accuracy: 69.29,
-      cost: 21600.54,
-      tpot: 0.04,
-      throughput: 1701.41,
-      color: '#4ade80'
-    },
-    'qwen3-30b-4xa6000': {
-      label: 'Qwen3-30B-A3B / BF16 / 4xRTX A6000',
-      model: 'Qwen3-30B-A3B',
-      precision: 'BF16',
-      gpu: '4xRTX A6000',
-      accuracy: 80.67,
-      cost: 21600.69,
-      tpot: 0.03,
-      throughput: 1417.49,
-      color: '#9333ea'
-    },
-    'qwen3-30b-2xa100': {
-      label: 'Qwen3-30B-A3B / BF16 / 2xA100',
-      model: 'Qwen3-30B-A3B',
-      precision: 'BF16',
-      gpu: '2xA100',
-      accuracy: 80.97,
-      cost: 54380.91,
-      tpot: 0.01,
-      throughput: 1806.09,
-      color: '#f87171'
-    },
-  };
+  // Select configs based on dataset
+  const CAP_CONFIGS = capDataset === 'longbench-v2' ? LONGBENCH_CONFIGS : GSM8K_CONFIGS;
+
+  // Reset config selections when dataset changes
+  useEffect(() => {
+    const configs = capDataset === 'longbench-v2' ? LONGBENCH_CONFIGS : GSM8K_CONFIGS;
+    const keys = Object.keys(configs);
+    setCapConfig1(keys[0] || '');
+    setCapConfig2(keys[1] || '');
+    setCapConfig3(keys[2] || '');
+  }, [capDataset]);
 
   const MODEL_CONFIG = MODEL_CONFIGS[selectedModel];
 
@@ -304,76 +598,133 @@ export default function App() {
   // --- Handlers ---
   const handleScenarioChange = (id) => {
     setScenario(id);
-    if (id === '4k-256') {
-      setBatchSize(1);
+    if (id === '5k-ref') {
+      // 5K Total: 4K input + 1K output
       setInputLen(4000);
-      setOutputLen(256);
-    } else if (id === '13k-1k') {
-      setBatchSize(1);
+      setOutputLen(1000);
+    } else if (id === '14k-ref') {
+      // 14K Total: 13K input + 1K output
       setInputLen(13000);
       setOutputLen(1000);
     }
   };
 
-  // --- Calculations Helper (Using table data) ---
+  // --- Calculations Helper (Using reference table values) ---
+  // Reference BW values are at specific BS values with TPOT=0.1s
+  // Use lookup for known batch sizes, interpolate for others
   const calculateDemand = (customBatchSize = null) => {
     const B = customBatchSize !== null ? customBatchSize : batchSize;
-    const { expertSize, restShared, E, k, P } = MODEL_CONFIG;
+    const { activationB, totalB, kvPerToken, refSeqLen, refBwBS1, refBwBS32, refBwBS64, refBwBS128, E, k, refBwBS1_14k, refBwBS32_14k, refBwBS64_14k, refBwBS128_14k } = MODEL_CONFIG;
 
-    // If model has pre-calculated expert size (from table), use simplified formula
-    if (expertSize && restShared) {
-      // From table: 
-      // 1. Calculate unique experts based on batch size
-      const totalExpertSelections = B * k;
-      const E_unique_expected = E * (1 - Math.pow(1 - 1/E, totalExpertSelections));
+    // Use sequence length from context settings
+    const effectiveSeqLen = inputLen + outputLen;
+    const tpot_seconds = sloMs / 1000;
+    const refTpot = 0.1; // Reference TPOT from table
+    
+    // Select reference value based on scenario (5K vs 14K)
+    const is14k = scenario === '14k-ref';
+    const baseRefBwBS1 = is14k && refBwBS1_14k ? refBwBS1_14k : refBwBS1;
+    const baseRefBwBS32 = is14k && refBwBS32_14k ? refBwBS32_14k : refBwBS32;
+    const baseRefBwBS64 = is14k && refBwBS64_14k ? refBwBS64_14k : refBwBS64;
+    const baseRefBwBS128 = is14k && refBwBS128_14k ? refBwBS128_14k : refBwBS128;
+    
+    let req_bw_gbs;
+    
+    // Build reference points map for known batch sizes
+    const refPoints = { 1: baseRefBwBS1 };
+    if (baseRefBwBS32) refPoints[32] = baseRefBwBS32;
+    if (baseRefBwBS64) refPoints[64] = baseRefBwBS64;
+    if (baseRefBwBS128) refPoints[128] = baseRefBwBS128;
+    
+    // Check if we have exact reference value for this batch size
+    if (refPoints[B]) {
+      // Use exact reference value, scale for TPOT
+      const tpotScaleFactor = refTpot / tpot_seconds;
+      req_bw_gbs = refPoints[B] * tpotScaleFactor;
+    } else if (baseRefBwBS1) {
+      // Interpolate between known reference points
+      const knownBSValues = Object.keys(refPoints).map(Number).sort((a, b) => a - b);
       
-      // 2. Activation size (GB) = rest-shared + E_unique * expert_size
-      const activationWeights = restShared + (E_unique_expected * expertSize);
+      // Find surrounding reference points
+      let lowerBS = 1, upperBS = 1;
+      let lowerBW = baseRefBwBS1, upperBW = baseRefBwBS1;
       
-      // 3. Theoretical bandwidth (GB/s) = activation weights / tpot (in seconds)
-      // Table uses tpot = 0.25s, we use sloMs converted to seconds
-      const tpot_seconds = sloMs / 1000;
-      const req_bw_gbs = activationWeights / tpot_seconds;
+      for (let i = 0; i < knownBSValues.length; i++) {
+        if (knownBSValues[i] <= B) {
+          lowerBS = knownBSValues[i];
+          lowerBW = refPoints[lowerBS];
+        }
+        if (knownBSValues[i] >= B && upperBS === 1) {
+          upperBS = knownBSValues[i];
+          upperBW = refPoints[upperBS];
+        }
+      }
       
-      return {
-        reqBwGBs: req_bw_gbs,
-        activeParamsGB: activationWeights,
-        kvCacheGB: 0, // Table doesn't show KV cache separately
-        uniqueExperts: E_unique_expected
-      };
+      // If no upper bound found, use highest known
+      if (upperBS < B) {
+        upperBS = knownBSValues[knownBSValues.length - 1];
+        upperBW = refPoints[upperBS];
+      }
+      
+      // Linear interpolation between known points
+      let interpolatedBW;
+      if (lowerBS === upperBS) {
+        interpolatedBW = lowerBW;
+      } else {
+        const ratio = (B - lowerBS) / (upperBS - lowerBS);
+        interpolatedBW = lowerBW + ratio * (upperBW - lowerBW);
+      }
+      
+      const tpotScaleFactor = refTpot / tpot_seconds;
+      req_bw_gbs = interpolatedBW * tpotScaleFactor;
+    } else {
+      // Fallback calculation for models without reference
+      const activationGB = activationB * 2;
+      const kvCacheGB = kvPerToken * effectiveSeqLen * B;
+      const totalLoadGB = activationGB + kvCacheGB;
+      req_bw_gbs = totalLoadGB / tpot_seconds;
     }
     
-    // Fallback to original detailed calculation for Qwen3
-    const { d_model, n_heads, n_kv, d_head, L, d_ff, V } = MODEL_CONFIG;
-    const avgContext = inputLen + (outputLen + 1) / 2;
-
-    const W_embed = V * d_model * P;
-    const W_Q = d_model * (n_heads * d_head) * P;
-    const W_K = d_model * (n_kv * d_head) * P;
-    const W_V = d_model * (n_kv * d_head) * P;
-    const W_O = (n_heads * d_head) * d_model * P;
-    const BW_attn = W_Q + W_K + W_V + W_O;
-    const W_gate = d_model * E * P;
-    const W_expert_single = 3 * d_model * d_ff * P;
+    // Calculate activation size for display
+    const activationGB = activationB * 2;
+    const kvCacheGB = kvPerToken * effectiveSeqLen * B;
     
+    // Calculate unique experts for display
     const totalExpertSelections = B * k;
     const E_unique_expected = E * (1 - Math.pow(1 - 1/E, totalExpertSelections));
-    const BW_moe = E_unique_expected * W_expert_single;
-    
-    const BW_layer = BW_attn + W_gate + BW_moe;
-    const BW_all_layers = L * BW_layer;
-    const W_lm_head = d_model * V * P;
-    const W_model_total = W_embed + BW_all_layers + W_lm_head;
-    const W_kv_current = L * B * avgContext * 2 * n_kv * d_head * P;
-    const BW_total = W_model_total + W_kv_current;
-    const req_bw_gbs = (BW_total / (sloMs / 1000)) / 1e9;
     
     return {
       reqBwGBs: req_bw_gbs,
-      activeParamsGB: W_model_total / 1e9,
-      kvCacheGB: W_kv_current / 1e9,
-      uniqueExperts: E_unique_expected
+      activeParamsGB: activationGB,
+      kvCacheGB: kvCacheGB,
+      uniqueExperts: E_unique_expected,
+      totalB: totalB
     };
+  };
+
+  // Calculate fully activated (dense) bandwidth - all experts active
+  // Reference value at TPOT=0.1s, scales inversely with TPOT (half TPOT = 2x bandwidth)
+  const calculateDenseBandwidth = () => {
+    const { totalB, kvPerToken, refSeqLen, denseRefBw, denseRefBw_14k } = MODEL_CONFIG;
+    const tpot_seconds = sloMs / 1000;
+    const refTpot = 0.1; // Reference TPOT
+    const tpotScaleFactor = refTpot / tpot_seconds;
+    
+    // Select reference value based on scenario (5K vs 14K)
+    const is14k = scenario === '14k-ref';
+    const baseDenseRefBw = is14k && denseRefBw_14k ? denseRefBw_14k : denseRefBw;
+    
+    if (baseDenseRefBw) {
+      // Scale reference value by TPOT factor
+      return baseDenseRefBw * tpotScaleFactor;
+    }
+    
+    // Fallback calculation for models without reference data
+    const denseGB = totalB * 2;
+    const kvCacheGB = kvPerToken * refSeqLen * 1; // BS=1
+    const totalLoadGB = denseGB + kvCacheGB;
+    
+    return totalLoadGB / tpot_seconds;
   };
 
   const currentStats = useMemo(() => {
@@ -449,17 +800,16 @@ export default function App() {
 
   // --- Chart Data: Power vs Bandwidth (MoE-CAP style) ---
   const chartData = useMemo(() => {
-    // Calculate theoretical bandwidth for current model (Dense - based on batch size)
-    const stats = calculateDemand();
-    const denseBw = stats.reqBwGBs;
+    // Calculate theoretical bandwidth at BS=1 (baseline)
+    const statsBS1 = calculateDemand(1);
+    const bwBS1 = statsBS1.reqBwGBs;
     
-    // Calculate Fully Activated bandwidth (all experts active)
-    let fullyActivatedBw = 0;
-    if (MODEL_CONFIG.expertSize && MODEL_CONFIG.restShared) {
-      const activationWeights = MODEL_CONFIG.restShared + (MODEL_CONFIG.E * MODEL_CONFIG.expertSize);
-      const tpot_seconds = sloMs / 1000;
-      fullyActivatedBw = activationWeights / tpot_seconds;
-    }
+    // Calculate theoretical bandwidth at current batch size
+    const stats = calculateDemand();
+    const currentBw = stats.reqBwGBs;
+    
+    // Calculate Fully Activated (Dense) bandwidth - all experts active
+    const fullyActivatedBw = calculateDenseBandwidth();
     
     // Actual Bandwidth (Supply) - Horizontal Line
     const actualBw = hardwareBw * numGpus * (currentSmbu / 100);
@@ -526,19 +876,8 @@ export default function App() {
       { name: 'Jetson Nano', bandwidth: 4, power: 12, category: 'autonomous', type: 'pcie' },
     ];
 
-    // Line data for horizontal requirement lines
-    const lineData = [];
-    for (let power = 5; power <= 20000; power *= 1.2) {
-      lineData.push({
-        power: Math.round(power),
-        dense: denseBw,
-        fullyActivated: fullyActivatedBw,
-        actual: actualBw,
-      });
-    }
-
-    return { lineData, peakDevices, offloadDevices, denseBw, fullyActivatedBw, actualBw };
-  }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel]);
+    return { peakDevices, offloadDevices, bwBS1, currentBw, fullyActivatedBw, actualBw };
+  }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel, inputLen, outputLen]);
 
   // --- Chart Data: Batch Size vs Bandwidth (shows MoE curve) ---
   const batchChartData = useMemo(() => {
@@ -562,7 +901,8 @@ export default function App() {
 
   // --- CAP Radar Chart Data ---
   const capRadarData = useMemo(() => {
-    const selectedConfigs = [capConfig1, capConfig2, capConfig3].filter(c => c !== '');
+    // Filter to only include configs that exist in current dataset
+    const selectedConfigs = [capConfig1, capConfig2, capConfig3].filter(c => c !== '' && CAP_CONFIGS[c]);
     
     // Find max values for normalization
     const allConfigs = Object.values(CAP_CONFIGS);
@@ -576,26 +916,32 @@ export default function App() {
     const normalizeCost = (val, max) => ((max - val) / max) * 100; // Lower is better
     const normalizeTpot = (val, max) => ((max - val) / max) * 100; // Lower is better
     
-    // Create radar data for each metric
+    // Create radar data for each metric with raw values
+    // Use Power (W) for LongBench, Cost ($) for GSM8K
+    const costLabel = capDataset === 'longbench-v2' ? 'Power (W)' : 'Cost ($)';
     const radarData = [
-      { metric: 'Accuracy (%)', fullMark: 100 },
-      { metric: 'Cost ($)', fullMark: 100 },
-      { metric: 'TPOT (s)', fullMark: 100 },
-      { metric: 'Throughput (T/s)', fullMark: 100 },
+      { metric: 'Accuracy (%)', fullMark: 100, metricType: 'accuracy' },
+      { metric: costLabel, fullMark: 100, metricType: 'cost' },
+      { metric: 'TPOT (s)', fullMark: 100, metricType: 'tpot' },
+      { metric: 'Throughput (T/s)', fullMark: 100, metricType: 'throughput' },
     ];
     
     selectedConfigs.forEach(configKey => {
       const config = CAP_CONFIGS[configKey];
       if (config) {
         radarData[0][configKey] = normalize(config.accuracy, maxAccuracy);
+        radarData[0][`${configKey}_raw`] = config.accuracy;
         radarData[1][configKey] = normalizeCost(config.cost, maxCost);
+        radarData[1][`${configKey}_raw`] = config.cost;
         radarData[2][configKey] = normalizeTpot(config.tpot, maxTpot);
+        radarData[2][`${configKey}_raw`] = config.tpot;
         radarData[3][configKey] = normalize(config.throughput, maxThroughput);
+        radarData[3][`${configKey}_raw`] = config.throughput;
       }
     });
     
     return { radarData, selectedConfigs };
-  }, [capConfig1, capConfig2, capConfig3]);
+  }, [capConfig1, capConfig2, capConfig3, capDataset]);
 
   // Get available options for each dropdown (excluding already selected)
   const getAvailableOptions = (currentValue, otherValues) => {
@@ -605,271 +951,311 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6">
-      <header className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Activity className="w-8 h-8 text-blue-500" />
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
-            MoE Bandwidth Estimator
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
+      {/* Top Navigation Bar */}
+      <nav className="bg-slate-800 border-b border-slate-700 px-6 py-3">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+              TEAS
+            </span>
+            <span className="text-xs text-slate-400 hidden sm:inline">Tracking Evolving AI and Systems</span>
+          </div>
+          <div className="flex items-center gap-6 text-sm">
+            <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">Mixture-of-Experts</a>
+            <span className="text-slate-500 cursor-not-allowed">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <span className="text-slate-500 cursor-not-allowed">Test-time Scaling <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="bg-gradient-to-b from-slate-800 to-slate-900 py-16 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl font-bold mb-8 pb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400" style={{ lineHeight: '1.2' }}>
+            Tracking Evolving AI and Systems
           </h1>
-          <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400">
-            {MODEL_CONFIG.name}
-          </span>
+          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
+            Uniting Models, Algorithms, and System Innovators with Top-Down Evolutionary Benchmarks.
+          </p>
         </div>
-        <p className="text-slate-400">
-          Theoretical vs. Actual Bandwidth Analysis (SGLang Profiling Reference)
-        </p>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Sidebar - Controls */}
-        <div className="space-y-6">
+      {/* Our Goal Section */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">Our Goal</h2>
+          <p className="text-slate-300 leading-relaxed">
+            We aim to create a suite of next-generation benchmarks that track the fast-evolving landscape of AI, 
+            and measure the complex trade-offs across costs, accuracy, and performance on a range of state-of-the-art hardware. 
+            Our approach is informed by two selection maps (one for models and the other for systems), with a broad team 
+            with extensive expertise in AI based at the{' '}
+            <a href="https://www.ed.ac.uk/" className="text-blue-400 hover:underline">University of Edinburgh</a>,{' '}
+            <a href="https://www.epcc.ed.ac.uk/" className="text-blue-400 hover:underline">EPCC</a>, and{' '}
+            <a href="https://www.imperial.ac.uk/" className="text-blue-400 hover:underline">Imperial College London</a>. 
+            Our project is funded by{' '}
+            <a href="https://www.aria.org.uk" className="text-blue-400 hover:underline">ARIA</a> as part of the "
+            <a href="https://www.aria.org.uk/opportunity-spaces/nature-computes-better/scaling-compute/" className="text-blue-400 hover:underline">Scaling compute</a>" programme.
+          </p>
+        </div>
+      </div>
+
+      {/* Dashboard Section */}
+      <div className="max-w-7xl mx-auto px-6 pb-6" id="moe">
+        <header className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Activity className="w-8 h-8 text-blue-500" />
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+              Mixture-of-Experts
+            </h1>
+            <a 
+              href="https://github.com/Auto-CAP/MoE-CAP" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full text-sm text-white transition-colors"
+            >
+              <Github className="w-4 h-4" />
+              <span>GitHub</span>
+            </a>
+            <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400">
+              {MODEL_CONFIG.name}
+            </span>
+          </div>
+        </header>
+
+      <main className="space-y-6">
+
+        {/* Chart 1: Power vs Bandwidth (MoE-CAP Style) with controls inside */}
+        <Card className="relative">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
+              MoE Deployment Benchmarking
+            </h3>
+            <span className="text-xs text-slate-500 italic">(Tested with SGLang)</span>
+          </div>
           
-          {/* Scenarios */}
-          <section>
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Server className="w-4 h-4" /> Context Size
-            </h2>
-            <div className="space-y-2">
-              <ScenarioButton 
-                active={scenario === '4k-256'}
-                onClick={() => handleScenarioChange('4k-256')}
-                label="IN: 4K, OUT: 256"
-                desc="Standard chat scenario"
-              />
-              <ScenarioButton 
-                active={scenario === '13k-1k'}
-                onClick={() => handleScenarioChange('13k-1k')}
-                label="IN: 13K, OUT: 1K"
-                desc="Long context generation"
-              />
+          {/* Controls Row - Context Size and Parameters inline */}
+          <div className="grid grid-cols-5 gap-4 mb-4">
+            {/* Context Size */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Context Size</label>
+              <select 
+                value={scenario}
+                onChange={(e) => handleScenarioChange(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+              >
+                <option value="5k-ref">5K (4K+1K)</option>
+                <option value="14k-ref">14K (13K+1K)</option>
+              </select>
             </div>
-          </section>
-
-          {/* Parameters */}
-          <section className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Settings className="w-4 h-4" /> Parameters
-            </h2>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Model</label>
-                <select 
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
-                >
-                  <option value="deepseek-v2-lite">Deepseek-V2-Lite</option>
-                  <option value="deepseek-r1">Deepseek-R1 (Fully Activated)</option>
-                  <option value="qwen1.5-moe">Qwen1.5-MoE</option>
-                  <option value="mixtral-8x22b">Mixtral-8x22B (Fully Activated)</option>
-                  <option value="qwen3">Qwen3-30B-A3B</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Batch Size</label>
-                <select 
-                  value={batchSize}
-                  onChange={(e) => setBatchSize(parseInt(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
-                >
-                  <option value={1}>1</option>
-                  <option value={4}>4</option>
-                  <option value={8}>8</option>
-                  <option value={16}>16</option>
-                  <option value={32}>32</option>
-                  <option value={64}>64</option>
-                  <option value={128}>128</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Target SLO (ms/token)</label>
-                <select 
-                  value={sloMs}
-                  onChange={(e) => setSloMs(parseInt(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
-                >
-                  <option value={10}>10 ms (Ultra Fast)</option>
-                  <option value={20}>20 ms (Very Fast)</option>
-                  <option value={50}>50 ms (Fast)</option>
-                  <option value={100}>100 ms (Standard)</option>
-                  <option value={200}>200 ms (Slow)</option>
-                  <option value={250}>250 ms (Table Reference)</option>
-                </select>
-                <p className="text-[10px] text-slate-500 mt-1">Table uses 250ms (0.25s tpot)</p>
-              </div>
+            {/* Model */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Model</label>
+              <select 
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+              >
+                <option value="mixtral-8x7b">Mixtral-8x7B</option>
+                <option value="mixtral-8x22b">Mixtral-8x22B</option>
+                <option value="qwen1.5-moe">Qwen1.5-MoE</option>
+                <option value="deepseek-r1">DeepSeek-R1</option>
+                <option value="deepseek-v2-lite">Deepseek-V2-Lite</option>
+              </select>
             </div>
-          </section>
-        </div>
-
-        {/* Right Side - Stats & Charts */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Chart 1: Power vs Bandwidth (MoE-CAP Style) */}
-          <Card className="h-[700px] relative">
-            <h3 className="text-lg font-semibold mb-4 pl-2 border-l-4 border-blue-500">
-              MoE Deployment Benchmarking - Power vs Bandwidth
-            </h3>
             
-            {/* Legend Box */}
-            <div className="absolute top-12 right-6 bg-slate-800/90 border border-slate-600 rounded px-3 py-2 z-10">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-xs text-slate-300">Peak Bandwidth</span>
-              </div>
+            {/* Batch Size */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Batch Size</label>
+              <select 
+                value={batchSize}
+                onChange={(e) => setBatchSize(parseInt(e.target.value))}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+              >
+                <option value={1}>1</option>
+                <option value={32}>32</option>
+                <option value={64}>64</option>
+                <option value={128}>128</option>
+              </select>
+            </div>
+            
+            {/* Target SLO (decode) */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Target SLO (decode)</label>
+              <select 
+                value={sloMs}
+                onChange={(e) => setSloMs(parseInt(e.target.value))}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+              >
+                <option value={10}>10 ms</option>
+                <option value={20}>20 ms</option>
+                <option value={50}>50 ms</option>
+                <option value={100}>100 ms</option>
+                <option value={200}>200 ms</option>
+                <option value={250}>250 ms</option>
+              </select>
+            </div>
+            
+            {/* Spacer for alignment */}
+            <div></div>
+          </div>
+          
+          {/* Line Legend - below controls */}
+          <div className="flex flex-wrap items-center gap-4 mb-2 pl-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 border-t-2 border-dashed border-blue-500"></div>
+              <span className="text-xs text-slate-300">BS=1: <span className="text-blue-400 font-semibold">{chartData.bwBS1?.toFixed(0)} GB/s</span></span>
+            </div>
+            {batchSize > 1 && (
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                <span className="text-xs text-slate-300">Offloading Bandwidth</span>
+                <div className="w-8 border-t-2 border-dashed border-green-500"></div>
+                <span className="text-xs text-slate-300">BS={batchSize}: <span className="text-green-400 font-semibold">{chartData.currentBw?.toFixed(0)} GB/s</span></span>
               </div>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="w-8 border-t-2 border-dashed border-red-500"></div>
+              <span className="text-xs text-slate-300">All Experts: <span className="text-red-400 font-semibold">{chartData.fullyActivatedBw?.toFixed(0)} GB/s</span></span>
             </div>
-            
-            <ResponsiveContainer width="100%" height="90%">
-              <ComposedChart margin={{ top: 20, right: 150, left: 80, bottom: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis 
-                  dataKey="power" 
-                  type="number"
-                  domain={[5, 20000]} 
-                  scale="log"
-                  tick={{ fill: '#94a3b8', fontSize: 10 }} 
-                  label={{ value: 'Power (W)', position: 'insideBottom', offset: -15, fill: '#94a3b8' }}
-                  allowDataOverflow={true}
-                />
-                <YAxis 
-                  stroke="#94a3b8"
-                  scale="log"
-                  domain={[10, 10000]}
-                  tick={{ fill: '#94a3b8', fontSize: 10 }}
-                  label={{ value: 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -40, fill: '#94a3b8' }}
-                  allowDataOverflow={true}
-                />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', padding: '8px 12px' }}
-                  content={({ active, payload, coordinate }) => {
-                    if (active && payload && payload.length > 0) {
-                      // 找到最匹配的数据点（第一个有type字段的）
-                      let matchedData = null;
-                      let matchedType = null;
-                      
-                      for (let i = 0; i < payload.length; i++) {
-                        const p = payload[i];
-                        if (p && p.payload && p.payload.name && p.payload.type) {
-                          matchedData = p.payload;
-                          matchedType = p.payload.type;
-                          break; // 只取第一个匹配的
-                        }
-                      }
-                      
-                      if (matchedData) {
-                        const isPeak = matchedType === 'peak';
-                        const color = isPeak ? '#3b82f6' : '#f97316';
-                        const typeLabel = isPeak ? 'Peak BW (Memory)' : 'PCIe/NVLink BW';
-                        return (
-                          <div style={{ backgroundColor: '#1e293b', border: `2px solid ${color}`, padding: '10px 14px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                            <div style={{ color: color, fontWeight: 600, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                              {isPeak ? (
-                                <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill={color} stroke="#fff" strokeWidth="1"/></svg>
-                              ) : (
-                                <svg width="12" height="12"><rect x="1" y="1" width="10" height="10" fill={color} stroke="#fff" strokeWidth="1"/></svg>
-                              )}
-                              {matchedData.name}
-                            </div>
-                            <div style={{ color: color, fontSize: '13px', fontWeight: 500 }}>
-                              {typeLabel}: {matchedData.bandwidth.toLocaleString()} GB/s
-                            </div>
-                            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
-                              Power: {matchedData.power}W
-                            </div>
-                            <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', textTransform: 'capitalize' }}>
-                              {matchedData.category.replace(/-/g, ' ')}
-                            </div>
+          </div>
+          
+          {/* Point Legend Box - top right */}
+          <div className="absolute top-16 right-6 bg-slate-800/90 border border-slate-600 rounded px-3 py-2 z-10">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-xs text-slate-300">Peak Bandwidth (Memory)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <span className="text-xs text-slate-300">PCIe Bandwidth (Offloading)</span>
+            </div>
+          </div>
+          
+          <ResponsiveContainer width="100%" height={550}>
+            <ScatterChart margin={{ top: 20, right: 30, left: 60, bottom: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis 
+                dataKey="power" 
+                type="number"
+                domain={[5, 15000]} 
+                scale="log"
+                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                ticks={[10, 50, 100, 300, 500, 1000, 3000, 10000]}
+                tickFormatter={(value) => value >= 1000 ? `${value/1000}k` : value}
+                label={{ value: 'Power (W)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }}
+                allowDataOverflow={false}
+                name="power"
+              />
+              <YAxis 
+                dataKey="bandwidth"
+                type="number"
+                stroke="#94a3b8"
+                scale="log"
+                domain={[10, Math.max(30000, chartData.fullyActivatedBw * 1.5)]}
+                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                ticks={[10, 50, 100, 500, 1000, 5000, 10000, 30000]}
+                tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
+                label={{ value: 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -40, fill: '#94a3b8' }}
+                allowDataOverflow={false}
+                name="bandwidth"
+              />
+              <ZAxis range={[60, 60]} />
+              <Tooltip 
+                cursor={{ strokeDasharray: '3 3', stroke: '#64748b' }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length > 0) {
+                    const data = payload[0]?.payload;
+                    if (data && data.name) {
+                      const isPeak = data.type === 'peak';
+                      const color = isPeak ? '#3b82f6' : '#f97316';
+                      const typeLabel = isPeak ? 'Peak BW (Memory)' : 'PCIe BW';
+                      return (
+                        <div style={{ backgroundColor: '#1e293b', border: `2px solid ${color}`, padding: '10px 14px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                          <div style={{ color: color, fontWeight: 600, marginBottom: '6px', fontSize: '14px' }}>
+                            {data.name}
                           </div>
-                        );
-                      }
+                          <div style={{ color: color, fontSize: '13px', fontWeight: 500 }}>
+                            {typeLabel}: {data.bandwidth?.toLocaleString()} GB/s
+                          </div>
+                          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
+                            Power: {data.power}W
+                          </div>
+                          <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', textTransform: 'capitalize' }}>
+                            {data.category?.replace(/-/g, ' ')}
+                          </div>
+                        </div>
+                      );
                     }
-                    return null;
-                  }}
-                />
-                <Legend 
-                  verticalAlign="top" 
-                  height={36} 
-                  wrapperStyle={{ top: -10, color: '#ffffff' }}
-                  iconType="line"
-                  payload={[
-                    { value: `${MODEL_CONFIG.name} (BS=${batchSize})`, type: 'line', color: '#3b82f6' },
-                    { value: `${MODEL_CONFIG.name} (Fully Activated)`, type: 'line', color: '#ef4444' }
-                  ]}
-                />
-                
-                {/* Horizontal lines for current model: BS=batchSize and Fully Activated */}
-                <Line 
-                  data={chartData.lineData}
-                  type="monotone" 
-                  dataKey="dense" 
-                  name={`${MODEL_CONFIG.name} (BS=${batchSize})`}
-                  stroke="#3b82f6" 
+                  }
+                  return null;
+                }}
+              />
+              
+              {/* Horizontal reference lines for model bandwidth requirements */}
+              {/* BS=1 line - always shown */}
+              <ReferenceLine 
+                y={chartData.bwBS1} 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                strokeDasharray="8 4"
+                ifOverflow="extendDomain"
+              />
+              {/* Current batch size line - only shown when BS > 1 */}
+              {batchSize > 1 && (
+                <ReferenceLine 
+                  y={chartData.currentBw} 
+                  stroke="#22c55e" 
                   strokeWidth={2}
-                  strokeDasharray="5 5" 
-                  dot={false}
-                  isAnimationActive={false}
-                  connectNulls
+                  strokeDasharray="8 4"
+                  ifOverflow="extendDomain"
                 />
-                <Line 
-                  data={chartData.lineData}
-                  type="monotone" 
-                  dataKey="fullyActivated" 
-                  name={`${MODEL_CONFIG.name} (Fully Activated)`}
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  strokeDasharray="5 5" 
-                  dot={false}
-                  isAnimationActive={false}
-                  connectNulls
-                />
+              )}
+              {/* All experts (fully activated) line */}
+              <ReferenceLine 
+                y={chartData.fullyActivatedBw} 
+                stroke="#ef4444" 
+                strokeWidth={2}
+                strokeDasharray="8 4"
+                ifOverflow="extendDomain"
+              />
 
-                {/* Device scatter points - blue circles for Peak Bandwidth (HBM/Memory) */}
-                <Scatter 
-                  data={chartData.peakDevices}
-                  dataKey="bandwidth"
-                  name="Peak Bandwidth"
-                  fill="#3b82f6"
-                  stroke="#3b82f6"
-                  isAnimationActive={false}
-                  legendType="none"
-                  shape={(props) => {
-                    const { cx, cy } = props;
-                    return <circle cx={cx} cy={cy} r={6} fill="#3b82f6" stroke="#1e40af" strokeWidth={1.5} />;
-                  }}
-                />
-                
-                {/* Device scatter points - orange circles for Offloading Bandwidth (PCIe) */}
-                <Scatter 
-                  data={chartData.offloadDevices}
-                  dataKey="bandwidth"
-                  name="Offloading Bandwidth"
-                  fill="#f97316"
-                  stroke="#f97316"
-                  isAnimationActive={false}
-                  legendType="none"
-                  shape={(props) => {
-                    const { cx, cy } = props;
-                    return <circle cx={cx} cy={cy} r={6} fill="#f97316" stroke="#c2410c" strokeWidth={1.5} />;
-                  }}
-                />
-                
-              </ComposedChart>
-            </ResponsiveContainer>
-          </Card>
+              {/* Device scatter points - blue circles for Peak Bandwidth (HBM/Memory) */}
+              <Scatter 
+                data={chartData.peakDevices}
+                name="Peak Bandwidth"
+                fill="#3b82f6"
+                isAnimationActive={false}
+              />
+              
+              {/* Device scatter points - orange circles for Offloading Bandwidth (PCIe) */}
+              <Scatter 
+                data={chartData.offloadDevices}
+                name="Offloading Bandwidth"
+                fill="#f97316"
+                isAnimationActive={false}
+              />
+              
+            </ScatterChart>
+          </ResponsiveContainer>
+        </Card>
 
-          {/* Chart 2: CAP Radar Plot */}
-          <Card className="mb-8">
-            <h3 className="text-lg font-semibold mb-4 pl-2 border-l-4 border-purple-500">
-              CAP Radar Plot - Cost, Accuracy, Performance
-            </h3>
+        {/* Chart 2: CAP Radar Plot */}
+        <Card className="mb-8">
+          <h3 className="text-lg font-semibold mb-4 pl-2 border-l-4 border-purple-500">
+            CAP Radar Plot - Cost, Accuracy, Performance
+          </h3>
+          
+          {/* Config Format Explanation */}
+          <div className="mb-4 p-3 bg-slate-800/50 rounded border border-slate-700">
+            <p className="text-xs text-slate-400">
+              <span className="text-slate-300 font-medium">Config Format:</span>{' '}
+              <span className="text-blue-400">Model</span> / <span className="text-green-400">Data Type</span> / <span className="text-orange-400">Hardware</span>
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Example: Qwen3-30B-A3B / BF16 / 5xRTX A5000
+            </p>
+          </div>
             
             {/* Dataset Selector */}
             <div className="mb-4">
@@ -879,6 +1265,7 @@ export default function App() {
                 onChange={(e) => setCapDataset(e.target.value)}
                 className="w-48 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
               >
+                <option value="longbench-v2">LongBench v2</option>
                 <option value="gsm8k">GSM8K</option>
               </select>
             </div>
@@ -971,7 +1358,36 @@ export default function App() {
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                  formatter={(value, name) => [`${value.toFixed(1)}%`, CAP_CONFIGS[name]?.label || name]}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length > 0) {
+                      const metricData = payload[0]?.payload;
+                      const metricType = metricData?.metricType;
+                      return (
+                        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '10px', borderRadius: '4px' }}>
+                          <div style={{ color: '#f8fafc', fontWeight: 600, marginBottom: '6px' }}>{metricData?.metric}</div>
+                          {payload.map((entry, index) => {
+                            const rawValue = metricData[`${entry.dataKey}_raw`];
+                            let displayValue = rawValue;
+                            if (metricType === 'cost') {
+                              displayValue = `$${rawValue?.toLocaleString()}`;
+                            } else if (metricType === 'accuracy') {
+                              displayValue = `${rawValue}%`;
+                            } else if (metricType === 'tpot') {
+                              displayValue = `${rawValue}s`;
+                            } else if (metricType === 'throughput') {
+                              displayValue = `${rawValue} T/s`;
+                            }
+                            return (
+                              <div key={index} style={{ color: entry.color, fontSize: '12px', marginTop: '4px' }}>
+                                {CAP_CONFIGS[entry.dataKey]?.label || entry.dataKey}: {displayValue}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -983,7 +1399,7 @@ export default function App() {
                   <tr className="border-b border-slate-700">
                     <th className="text-left py-2 px-2 text-slate-400">Config</th>
                     <th className="text-right py-2 px-2 text-slate-400">Accuracy</th>
-                    <th className="text-right py-2 px-2 text-slate-400">Cost ($)</th>
+                    <th className="text-right py-2 px-2 text-slate-400">{capDataset === 'longbench-v2' ? 'Power (W)' : 'Cost ($)'}</th>
                     <th className="text-right py-2 px-2 text-slate-400">TPOT (s)</th>
                     <th className="text-right py-2 px-2 text-slate-400">Throughput</th>
                   </tr>
@@ -995,7 +1411,7 @@ export default function App() {
                       <tr key={configKey} className="border-b border-slate-800">
                         <td className="py-2 px-2" style={{ color: config.color }}>{config.label}</td>
                         <td className="text-right py-2 px-2 text-slate-300">{config.accuracy}%</td>
-                        <td className="text-right py-2 px-2 text-slate-300">${config.cost.toLocaleString()}</td>
+                        <td className="text-right py-2 px-2 text-slate-300">{capDataset === 'longbench-v2' ? `${config.cost.toLocaleString()}W` : `$${config.cost.toLocaleString()}`}</td>
                         <td className="text-right py-2 px-2 text-slate-300">{config.tpot}s</td>
                         <td className="text-right py-2 px-2 text-slate-300">{config.throughput} T/s</td>
                       </tr>
@@ -1006,48 +1422,8 @@ export default function App() {
             </div>
           </Card>
 
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <h4 className="font-semibold text-slate-300 mb-3 border-b border-slate-700 pb-2">MoE Model Config</h4>
-              <ul className="space-y-2 text-sm text-slate-400">
-                <li className="flex justify-between">
-                  <span>Model:</span>
-                  <span className="text-slate-200">{MODEL_CONFIG.name}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Active Experts (top-k):</span>
-                  <span className="text-slate-200">{MODEL_CONFIG.k} / {MODEL_CONFIG.E}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Unique Experts (B={batchSize}):</span>
-                  <span className="text-green-400">{currentStats.uniqueExperts?.toFixed(1)} expected</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>MBU (Efficiency):</span>
-                  <span className="text-slate-200">{currentSmbu.toFixed(2)}%</span>
-                </li>
-              </ul>
-            </Card>
-
-            <Card>
-              <h4 className="font-semibold text-slate-300 mb-3 border-b border-slate-700 pb-2">MoE-CAP Formula</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                <strong className="text-green-400">Unique Experts (Probabilistic):</strong><br/>
-                <code className="text-green-300 bg-slate-900 px-1 rounded text-[10px]">E_unique = E × (1 - (1-1/E)^(B×k))</code>
-              </p>
-              <p className="text-xs text-slate-400 leading-relaxed mt-2">
-                <strong>Theoretical Bandwidth:</strong><br/>
-                <code className="text-blue-300 bg-slate-900 px-1 rounded text-[10px]">(Weights + KV_Cache) / SLO</code>
-              </p>
-              <p className="text-xs text-slate-500 leading-relaxed mt-2">
-                The probabilistic model accounts for expert overlap as batch size increases, creating a saturating <span className="text-green-400">curve</span> instead of a linear slope.
-              </p>
-            </Card>
-          </div>
-
-        </div>
       </main>
+      </div>
     </div>
   );
 }
