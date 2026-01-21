@@ -555,10 +555,10 @@ export default function App() {
   const [numGpus, setNumGpus] = useState(1); // Supply side GPU count
 
   // CAP Radar Chart selections (3 configs)
-  const [capConfig1, setCapConfig1] = useState('qwen3-235b-ep-tp-16h20');
-  const [capConfig2, setCapConfig2] = useState('qwen3-30b-ep-tp-8h20');
-  const [capConfig3, setCapConfig3] = useState('deepseek-r1-dp-ep-16h20');
-  const [capDataset, setCapDataset] = useState('longbench-v2');
+  const [capConfig1, setCapConfig1] = useState('qwen3-30b-a3b-5xa5000');
+  const [capConfig2, setCapConfig2] = useState('qwen1.5-moe-1xa6000');
+  const [capConfig3, setCapConfig3] = useState('qwen3-235b-fp8-2xh200');
+  const [capDataset, setCapDataset] = useState('gsm8k');
 
   // Select configs based on dataset
   const CAP_CONFIGS = capDataset === 'longbench-v2' ? LONGBENCH_CONFIGS : GSM8K_CONFIGS;
