@@ -235,62 +235,6 @@ function BenchmarkTooltip({ active, payload }) {
 }
 
 
-function PointLabel(props) {
-  const { x, y, payload } = props;
-  if (!payload?.showLabel) return null;
-
-  const text = payload.labelText ?? "";
-  const dx = payload.labelDx ?? 10;
-  const dy = payload.labelDy ?? -10;
-
-  // bubble sizing (rough but works)
-  const padX = 6;
-  const w = Math.max(30, text.length * 6.2 + padX * 2);
-  const h = 18;
-
-  const bx = x + dx;
-  const by = y + dy - h / 2;
-
-  return (
-    <g>
-      {/* connector */}
-      <line
-        x1={x}
-        y1={y}
-        x2={bx}
-        y2={by + h / 2}
-        stroke="#94a3b8"
-        strokeWidth={1}
-        opacity={0.65}
-      />
-
-      {/* bubble */}
-      <rect
-        x={bx}
-        y={by}
-        width={w}
-        height={h}
-        rx={4}
-        fill="#0f172a"
-        stroke="#334155"
-        opacity={0.95}
-      />
-
-      {/* text */}
-      <text
-        x={bx + padX}
-        y={by + h / 2}
-        fill="#e2e8f0"
-        fontSize={11}
-        fontWeight={600}
-        dominantBaseline="middle"
-      >
-        {text}
-      </text>
-    </g>
-  );
-}
-
 
 
 
@@ -301,8 +245,37 @@ function AccuracyVsQphChartCard({ chartData }) {
     <Card className="mb-8">
       <div className="flex justify-between items-start mb-4">
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
-          Test-time Scaling — Accuracy vs Questions per Hour
+          Test-time Scaling – Accuracy vs Questions per Hour for various scaling settings
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            Each datapoint represents a specific combination of sequential and parallel scaling, and number of samples per aggregation step.
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            S=Sequential, P=Parallel, N=Number of samples
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            1- When given a task, the model is initially asked to generate P responses in parallel.
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            2.1- Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            2.2- Repeat step 2.1 P times to generate P new responses.
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            3- Repeat steps 2.1 and 2.2 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
+          </span>
+          <br />
+          <span className="font-normal text-slate-400 text-sm">
+            4- The final output is a single, final aggregated response at the end of the final stage.
+          </span>
         </h2>
+        
       </div>
 
       {hasData ? (
@@ -359,7 +332,7 @@ function AccuracyVsQphChartCard({ chartData }) {
                     const par = p?.meta?.parallel;
                     const n = p?.meta?.samples;
 
-                    const text = `S${s ?? "-"} P${par ?? "-"} N${n ?? "-"}`;
+                    const text = `S=${s ?? "-"} P=${par ?? "-"} N=${n ?? "-"}`;
 
                     const dx = 10;
                     const dy = -12;
