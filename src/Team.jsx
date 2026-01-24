@@ -52,11 +52,11 @@ export default function Team() {
               </li>
               <li className="flex flex-col">
                 <span className="font-semibold text-slate-100 text-lg">Edoardo Ponti</span>
-                <span className="text-slate-400">University of Edinburgh, Nvidia</span>
+                <span className="text-slate-400">University of Edinburgh</span>
               </li>
               <li className="flex flex-col">
                 <span className="font-semibold text-slate-100 text-lg">Luo Mai</span>
-                <span className="text-slate-400">University of Edinburgh, Microsoft Research</span>
+                <span className="text-slate-400">University of Edinburgh</span>
               </li>
               <li className="flex flex-col">
                 <span className="font-semibold text-slate-100 text-lg">Nick Brown</span>
@@ -104,8 +104,6 @@ export default function Team() {
             <a href="https://www.ed.ac.uk/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">University of Edinburgh</a>
             <a href="https://www.epcc.ed.ac.uk/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">EPCC</a>
             <a href="https://www.imperial.ac.uk/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Imperial College London</a>
-            <a href="https://www.nvidia.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Nvidia</a>
-            <a href="https://www.microsoft.com/en-us/research/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Microsoft Research</a>
           </div>
         </div>
       </div>

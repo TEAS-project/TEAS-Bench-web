@@ -592,7 +592,7 @@ export default function App() {
   const [scenario, setScenario] = useState('5k-ref');
   
   // Inputs - default to 5k reference (4750 + 250 = 5000)
-  const [batchSize, setBatchSize] = useState(33);
+  const [batchSize, setBatchSize] = useState(1);
   const [inputLen, setInputLen] = useState(4750);
   const [outputLen, setOutputLen] = useState(250);
   const [sloMs, setSloMs] = useState(100); // Target Time Per Output Token (ms) - default 100ms = 0.1s
@@ -903,27 +903,27 @@ export default function App() {
       // Data Center Systems (Multi-GPU with NVLink)
       { name: 'NVIDIA DGX-H100', bandwidth: 1280, power: 10200, category: 'datacenter-system', type: 'pcie', showLabel: true },
       { name: 'NVIDIA DGX-A100', bandwidth: 512, power: 6500, category: 'datacenter-system', type: 'pcie', showLabel: false },
-      // Data Center Cards (PCIe) - 调整power避免与peak重叠
-      { name: 'AMD MI300X', bandwidth: 128, power: 850, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 780, category: 'datacenter-card', type: 'pcie', showLabel: true },
-      { name: 'AWS Trainium 2', bandwidth: 128, power: 520, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 380, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 440, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 340, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      // Data Center Cards (PCIe)
+      { name: 'AMD MI300X', bandwidth: 128, power: 750, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 700, category: 'datacenter-card', type: 'pcie', showLabel: true },
+      { name: 'AWS Trainium 2', bandwidth: 128, power: 480, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 350, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 400, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 300, category: 'datacenter-card', type: 'pcie', showLabel: false },
       { name: 'NVIDIA A6000', bandwidth: 64, power: 300, category: 'datacenter-card', type: 'pcie', showLabel: false },
       { name: 'NVIDIA A5000', bandwidth: 64, power: 230, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      // Personal (Consumer GPUs - PCIe) - 调整power避免重叠
-      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 620, category: 'personal', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 400, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 500, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 4080', bandwidth: 64, power: 350, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 3090Ti', bandwidth: 64, power: 420, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 3080Ti', bandwidth: 64, power: 380, category: 'personal', type: 'pcie', showLabel: false },
+      // Personal (Consumer GPUs - PCIe)
+      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 575, category: 'personal', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 360, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 450, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 4080', bandwidth: 64, power: 320, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 3090Ti', bandwidth: 64, power: 400, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 3080Ti', bandwidth: 64, power: 350, category: 'personal', type: 'pcie', showLabel: false },
       // Autonomous (NVIDIA Jetson)
       { name: 'NVIDIA Orin AGX', bandwidth: 16, power: 60, category: 'autonomous', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA Xavier AGX', bandwidth: 16, power: 35, category: 'autonomous', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA Orin NX', bandwidth: 16, power: 28, category: 'autonomous', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA Jetson Nano', bandwidth: 4, power: 12, category: 'autonomous', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA Xavier AGX', bandwidth: 16, power: 30, category: 'autonomous', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA Orin NX', bandwidth: 16, power: 25, category: 'autonomous', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA Jetson Nano', bandwidth: 4, power: 10, category: 'autonomous', type: 'pcie', showLabel: true },
     ];
 
     return { peakDevices, offloadDevices, bwBS1, currentBw, fullyActivatedBw, actualBw };
@@ -1121,12 +1121,13 @@ export default function App() {
 
         {/* Chart 1: Power vs Bandwidth (MoE-CAP Style) with controls inside */}
         <Card className="relative">
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex justify-between items-start mb-2">
             <h3 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
-              MoE Deployment Benchmarking
+              Hardware Map
             </h3>
             <span className="text-xs text-slate-500 italic">(Tested with SGLang)</span>
           </div>
+          <p className="text-xs text-slate-400 mb-4 pl-2">Dotted lines represent the required bandwidth at a given batch size, context configuration, and SLO constraint for the selected MoE model. Dots represent hardware options; those above the line have sufficient capability to meet the requirements.</p>
           
           {/* Controls Row - Context Size and Parameters inline */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4">
@@ -1191,8 +1192,17 @@ export default function App() {
               </select>
             </div>
             
-            {/* Spacer for alignment */}
-            <div></div>
+            {/* Point Legend - in grid */}
+            <div className="flex flex-col justify-center bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-xs text-slate-300">Peak Bandwidth (Memory)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <span className="text-xs text-slate-300">PCIe Bandwidth (Offloading)</span>
+              </div>
+            </div>
           </div>
           
           {/* Line Legend - below controls */}
@@ -1210,18 +1220,6 @@ export default function App() {
             <div className="flex items-center gap-2">
               <div className="w-8 border-t-2 border-dashed border-red-500"></div>
               <span className="text-xs text-slate-300">All expert activated (Batch Size≈{closestBatchSize}): <span className="text-red-400 font-semibold">{chartData.fullyActivatedBw?.toFixed(0)} GB/s</span></span>
-            </div>
-          </div>
-          
-          {/* Point Legend Box - top right */}
-          <div className="hidden sm:block absolute top-16 right-4 sm:right-6 bg-slate-800/90 border border-slate-600 rounded px-2 sm:px-3 py-2 z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-xs text-slate-300">Peak Bandwidth (Memory)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-xs text-slate-300">PCIe Bandwidth (Offloading)</span>
             </div>
           </div>
           
@@ -1424,9 +1422,10 @@ export default function App() {
 
         {/* Chart 2: CAP Radar Plot */}
         <Card className="mb-8">
-          <h3 className="text-lg font-semibold mb-4 pl-2 border-l-4 border-purple-500">
+          <h3 className="text-lg font-semibold mb-2 pl-2 border-l-4 border-purple-500">
             CAP Radar Plot - Cost, Accuracy, Performance
           </h3>
+          <p className="text-xs text-slate-400 mb-4 pl-2">Empirical evaluation across diverse model and system configurations to reveal Cost, Accuracy, and Performance trade-offs.</p>
           
           {/* Config Format Explanation */}
           <div className="mb-4 p-3 bg-slate-800/50 rounded border border-slate-700">
