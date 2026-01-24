@@ -9,7 +9,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell
+  Cell,
+  LabelList,
 } from "recharts";
 import { BENCHMARK_ROWS } from "./data/tts-benchmarks/index.js";
 /** --- Constants (outside the component) --- */
@@ -233,6 +234,66 @@ function BenchmarkTooltip({ active, payload }) {
   );
 }
 
+
+function PointLabel(props) {
+  const { x, y, payload } = props;
+  if (!payload?.showLabel) return null;
+
+  const text = payload.labelText ?? "";
+  const dx = payload.labelDx ?? 10;
+  const dy = payload.labelDy ?? -10;
+
+  // bubble sizing (rough but works)
+  const padX = 6;
+  const w = Math.max(30, text.length * 6.2 + padX * 2);
+  const h = 18;
+
+  const bx = x + dx;
+  const by = y + dy - h / 2;
+
+  return (
+    <g>
+      {/* connector */}
+      <line
+        x1={x}
+        y1={y}
+        x2={bx}
+        y2={by + h / 2}
+        stroke="#94a3b8"
+        strokeWidth={1}
+        opacity={0.65}
+      />
+
+      {/* bubble */}
+      <rect
+        x={bx}
+        y={by}
+        width={w}
+        height={h}
+        rx={4}
+        fill="#0f172a"
+        stroke="#334155"
+        opacity={0.95}
+      />
+
+      {/* text */}
+      <text
+        x={bx + padX}
+        y={by + h / 2}
+        fill="#e2e8f0"
+        fontSize={11}
+        fontWeight={600}
+        dominantBaseline="middle"
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
+
+
+
+
 function AccuracyVsQphChartCard({ chartData }) {
   const hasData = chartData && chartData.length > 0;
 
@@ -286,6 +347,57 @@ function AccuracyVsQphChartCard({ chartData }) {
 
               {/* ✅ render ALL points */}
               <Scatter data={chartData} name="Runs" isAnimationActive={false}>
+                <LabelList
+                  content={(props) => {
+                    const { x, y, index } = props;
+                    const p = chartData[index];
+                    if (!p) return null;
+
+                    // TEMP: show labels for all points to verify it works
+                    // Later you can change to: if (!p.showLabel) return null;
+                    const s = p?.meta?.sequential;
+                    const par = p?.meta?.parallel;
+                    const n = p?.meta?.samples;
+
+                    const text = `S${s ?? "-"} P${par ?? "-"} N${n ?? "-"}`;
+
+                    const dx = 10;
+                    const dy = -12;
+
+                    return (
+                      <g>
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={x + dx}
+                          y2={y + dy}
+                          stroke="#94a3b8"
+                          strokeWidth={1}
+                          opacity={0.6}
+                        />
+                        <rect
+                          x={x + dx - 2}
+                          y={y + dy - 10}
+                          width={Math.max(40, text.length * 6.2)}
+                          height={16}
+                          rx={3}
+                          fill="#0f172a"
+                          stroke="#334155"
+                          opacity={0.95}
+                        />
+                        <text
+                          x={x + dx + 4}
+                          y={y + dy - 2}
+                          fill="#e2e8f0"
+                          fontSize={11}
+                          fontWeight={600}
+                        >
+                          {text}
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
                 {chartData.map((p, i) => (
                   <Cell key={i} fill={p.color || "#3b82f6"} />
                 ))}
@@ -313,13 +425,41 @@ function AccuracyVsQphChartCard({ chartData }) {
 function ChartSection({ selection, selectionLabel, selectedRows }) {
   const chartData = useMemo(() => {
     if (!selectedRows?.length) return [];
-    return selectedRows.map((row, idx) => ({
-      label: `${selectionLabel} (run ${idx + 1})`, // or whatever you want
-      questionsPerHour: row.questionsPerHour,
-      accuracy: row.accuracy,
-      meta: row.meta,
-      color: row.color,
-    }));
+
+    // Example heuristic: label top-accuracy and top-QPH points
+    const maxAcc = Math.max(...selectedRows.map(r => r.accuracy));
+    const maxQph = Math.max(...selectedRows.map(r => r.questionsPerHour));
+
+    return selectedRows.map((row, idx) => {
+      const s = row?.meta?.sequential;
+      const p = row?.meta?.parallel;
+      const n = row?.meta?.samples;
+
+      // your existing label format
+      const labelText = `S${s ?? "-"} P${p ?? "-"} N${n ?? "-"}`;
+
+      // choose which ones to label
+      const showLabel =
+        row.accuracy === maxAcc ||
+        row.questionsPerHour === maxQph;
+
+      // simple offset rule (you can tune or hardcode per-point)
+      const labelDx = row.questionsPerHour === maxQph ? 14 : 10;
+      const labelDy = row.accuracy === maxAcc ? -18 : -10;
+
+      return {
+        questionsPerHour: row.questionsPerHour,
+        accuracy: row.accuracy,
+        meta: row.meta,
+        color: row.color,
+
+        // NEW:
+        labelText,
+        showLabel,
+        labelDx,
+        labelDy,
+      };
+    });
   }, [selectedRows, selectionLabel]);
 
   return <AccuracyVsQphChartCard chartData={chartData} />;
