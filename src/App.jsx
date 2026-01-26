@@ -1052,6 +1052,15 @@ export default function App() {
             <span className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
               TEAS
             </span>
+            <a 
+              href="https://github.com/TEAS-project/TEASBench" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-slate-300 hover:text-blue-400 transition-colors"
+              title="View on GitHub"
+            >
+              <Github className="w-5 h-5 sm:w-6 sm:h-6" />
+            </a>
             <span className="text-xs text-slate-400 hidden md:inline">Tracking Evolving AI and Systems</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 text-xs sm:text-sm">
