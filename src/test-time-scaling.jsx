@@ -100,6 +100,11 @@ const EXPLANATION_CARD = (
           ones over multiple rounds. Often gives a better accuracy–cost frontier, but requires careful
           scheduling (when to stop, how to allocate budget across rounds, and how to handle early exits).
         </p>
+        <br />
+        <p className="text-slate-300 leading-relaxed">
+          Note: For datapoints with Sequential S = 1, there is no value for N (number of samples), as this
+          is equivalent to full parallel scaling with majority voting. There is no subsequent sampling and aggregation.
+        </p>
       </div>
 
       <div>
