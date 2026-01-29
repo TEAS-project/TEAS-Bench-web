@@ -288,18 +288,6 @@ const LONGBENCH_CONFIGS = {
 
 // GSM8K benchmark data - defined outside component for stability
 const GSM8K_CONFIGS = {
-  'qwen3-30b-a3b-5xa5000': {
-    label: 'Qwen3-30B-A3B / BF16 / 5xRTX A5000 / SGLang',
-    model: 'Qwen3-30B-A3B',
-    precision: 'BF16',
-    gpu: '5xRTX A5000',
-    system: 'SGLang',
-    accuracy: 81.12,
-    cost: 15342.20,
-    tpot: 0.05,
-    throughput: 1402.01,
-    color: '#3b82f6'
-  },
   'qwen1.5-moe-1xa6000': {
     label: 'Qwen1.5-MoE-A2.7B-Chat / BF16 / 1xRTX A6000 / SGLang',
     model: 'Qwen1.5-MoE-A2.7B-Chat',
@@ -1443,7 +1431,7 @@ export default function App() {
               <span className="text-blue-400">Model</span> / <span className="text-green-400">Data Type</span> / <span className="text-orange-400">Hardware</span> / <span className="text-purple-400">System</span>
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Example: Qwen3-30B-A3B / BF16 / 5xRTX A5000 / SGLang
+              Example: Qwen3-30B-A3B / BF16 / 4xRTX A6000 / SGLang
             </p>
           </div>
             
