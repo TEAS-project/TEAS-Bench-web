@@ -1043,6 +1043,7 @@ export default function App() {
             <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">Mixture-of-Experts</a>
             <Link to="/test-time-scaling" className="text-slate-300 hover:text-blue-400 transition-colors">Test Time Scaling</Link>
             <span className="text-slate-500 cursor-not-allowed hidden md:inline">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <span className="text-slate-500 cursor-not-allowed">Documentation <span className="text-xs text-slate-600">(Coming Soon)</span></span>
             <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
           </div>
         </div>
@@ -1113,6 +1114,13 @@ export default function App() {
             <span className="text-xs text-slate-500 italic">(Tested with SGLang)</span>
           </div>
           <p className="text-xs text-slate-400 mb-4 pl-2">Dotted lines represent the required bandwidth at a given batch size, context configuration, and SLO constraint for the selected MoE model. Dots represent hardware options; those above the line have sufficient capability to meet the requirements.</p>
+          
+          <div className="text-xs text-slate-400 mb-4 pl-2 space-y-2">
+            <p><span className="text-blue-400">• HBM bandwidth (blue points):</span> GPU memory capacity is sufficient, or systems like MoE-Infinity achieve near-HBM bandwidth through compute-data transfer overlapping despite limited capacity</p>
+            <p><span className="text-orange-400">• PCIe bandwidth (orange points):</span> Memory capacity is insufficient and offloading is required, making PCIe the bottleneck</p>
+            <p><span className="text-slate-300">• Multi-GPU configurations (e.g., DGX-H100):</span> Scaling out to meet capacity requirements while maintaining HBM-level bandwidth</p>
+            <p className="mt-2 pt-2 border-t border-slate-700">The hardware map serves two purposes: (1) indicate whether a given hardware's bandwidth is sufficient for the target SLO, and (2) show that meeting certain latency requirements may require scaling memory capacity rather than continuously increasing bandwidth per device</p>
+          </div>
           
           {/* Controls Row - Context Size and Parameters inline */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4">
