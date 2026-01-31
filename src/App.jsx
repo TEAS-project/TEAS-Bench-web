@@ -575,6 +575,7 @@ export default function App() {
   const [hardwareBw, setHardwareBw] = useState(768); // Default A6000
   const [smbu, setSmbu] = useState(16.33); // Fixed S-MBU
   const [numGpus, setNumGpus] = useState(1); // Supply side GPU count
+  const [yAxisType, setYAxisType] = useState('bandwidth'); // 'bandwidth' or 'tpot'
 
   // CAP Radar Chart selections (3 configs)
   const [capConfig1, setCapConfig1] = useState('qwen3-30b-4xa6000');
@@ -902,8 +903,54 @@ export default function App() {
       { name: 'NVIDIA Jetson Nano', bandwidth: 4, power: 10, category: 'autonomous', type: 'pcie', showLabel: true },
     ];
 
-    return { peakDevices, offloadDevices, bwBS1, currentBw, fullyActivatedBw, actualBw };
-  }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel, inputLen, outputLen]);
+    // Calculate required bandwidth at SLO=100ms for TPOT calculation
+    // For TPOT mode, we use fixed SLO=100ms (0.1s) as reference
+    const refSloSeconds = 0.1; // Fixed 100ms SLO for TPOT calculation
+    const statsForTpot = calculateDemand(batchSize);
+    // The required bandwidth at 100ms SLO is stored in model config
+    // For current batch size, calculate required BW at 100ms SLO
+    const MODEL_CONFIG_LOCAL = MODEL_CONFIGS[selectedModel];
+    const is14k = scenario === '14k-ref';
+    
+    // Get reference bandwidth at current batch size for SLO=100ms
+    let reqBwAt100ms;
+    const bsRefPoints = { 1: is14k && MODEL_CONFIG_LOCAL.refBwBS1_14k ? MODEL_CONFIG_LOCAL.refBwBS1_14k : MODEL_CONFIG_LOCAL.refBwBS1 };
+    if (MODEL_CONFIG_LOCAL.refBwBS32) bsRefPoints[32] = is14k && MODEL_CONFIG_LOCAL.refBwBS32_14k ? MODEL_CONFIG_LOCAL.refBwBS32_14k : MODEL_CONFIG_LOCAL.refBwBS32;
+    if (MODEL_CONFIG_LOCAL.refBwBS64) bsRefPoints[64] = is14k && MODEL_CONFIG_LOCAL.refBwBS64_14k ? MODEL_CONFIG_LOCAL.refBwBS64_14k : MODEL_CONFIG_LOCAL.refBwBS64;
+    if (MODEL_CONFIG_LOCAL.refBwBS128) bsRefPoints[128] = is14k && MODEL_CONFIG_LOCAL.refBwBS128_14k ? MODEL_CONFIG_LOCAL.refBwBS128_14k : MODEL_CONFIG_LOCAL.refBwBS128;
+    
+    if (bsRefPoints[batchSize]) {
+      reqBwAt100ms = bsRefPoints[batchSize];
+    } else {
+      // Interpolate for unknown batch sizes
+      const knownBSValues = Object.keys(bsRefPoints).map(Number).sort((a, b) => a - b);
+      let lowerBS = 1, upperBS = 1;
+      let lowerBW = bsRefPoints[1], upperBW = bsRefPoints[1];
+      for (let i = 0; i < knownBSValues.length; i++) {
+        if (knownBSValues[i] <= batchSize) { lowerBS = knownBSValues[i]; lowerBW = bsRefPoints[lowerBS]; }
+        if (knownBSValues[i] >= batchSize && upperBS === 1) { upperBS = knownBSValues[i]; upperBW = bsRefPoints[upperBS]; }
+      }
+      if (upperBS < batchSize) { upperBS = knownBSValues[knownBSValues.length - 1]; upperBW = bsRefPoints[upperBS]; }
+      reqBwAt100ms = lowerBS === upperBS ? lowerBW : lowerBW + ((batchSize - lowerBS) / (upperBS - lowerBS)) * (upperBW - lowerBW);
+    }
+    
+    // Add TPOT calculation to each device: TPOT = 0.1s * (reqBwAt100ms / devicePeakBw)
+    // TPOT in ms for display
+    const peakDevicesWithTpot = peakDevices.map(d => ({
+      ...d,
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 // Convert to ms
+    }));
+    
+    const offloadDevicesWithTpot = offloadDevices.map(d => ({
+      ...d,
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 // Convert to ms
+    }));
+    
+    // Reference TPOT value = 100ms (the SLO)
+    const refTpotMs = 100;
+
+    return { peakDevices: peakDevicesWithTpot, offloadDevices: offloadDevicesWithTpot, bwBS1, currentBw, fullyActivatedBw, actualBw, reqBwAt100ms, refTpotMs };
+  }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel, inputLen, outputLen, scenario]);
 
   // --- Chart Data: Batch Size vs Bandwidth (shows MoE curve) ---
   const batchChartData = useMemo(() => {
@@ -1168,7 +1215,21 @@ export default function App() {
               </select>
             </div>
             
-            {/* Target SLO (decode) */}
+            {/* Y-Axis Type */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Y-Axis</label>
+              <select 
+                value={yAxisType}
+                onChange={(e) => setYAxisType(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+              >
+                <option value="bandwidth">Bandwidth (GB/s)</option>
+                <option value="tpot">Best TPOT (ms)</option>
+              </select>
+            </div>
+            
+            {/* Target SLO (decode) - only show when bandwidth is selected */}
+            {yAxisType === 'bandwidth' && (
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1">Target SLO (decode)</label>
               <select 
@@ -1184,6 +1245,7 @@ export default function App() {
                 <option value={250}>250 ms</option>
               </select>
             </div>
+            )}
             
             {/* Point Legend - in grid */}
             <div className="flex flex-col justify-center bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
@@ -1198,7 +1260,8 @@ export default function App() {
             </div>
           </div>
           
-          {/* Line Legend - below controls */}
+          {/* Line Legend - below controls (only show for bandwidth mode) */}
+          {yAxisType === 'bandwidth' && (
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 pl-2 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-8 border-t-2 border-dashed border-blue-500"></div>
@@ -1215,6 +1278,7 @@ export default function App() {
               <span className="text-xs text-slate-300">All expert activated (Batch Size≈{closestBatchSize}): <span className="text-red-400 font-semibold">{chartData.fullyActivatedBw?.toFixed(0)} GB/s</span></span>
             </div>
           </div>
+          )}
           
           <div className="h-[350px] sm:h-[450px] md:h-[500px] lg:h-[550px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -1233,17 +1297,23 @@ export default function App() {
                 name="power"
               />
               <YAxis 
-                dataKey="bandwidth"
+                dataKey={yAxisType === 'tpot' ? 'tpot' : 'bandwidth'}
                 type="number"
                 stroke="#94a3b8"
                 scale="log"
-                domain={[10, Math.max(30000, chartData.fullyActivatedBw * 1.5)]}
+                domain={yAxisType === 'tpot' 
+                  ? [1, 10000]  // TPOT range in ms
+                  : [10, Math.max(30000, chartData.fullyActivatedBw * 1.5)]}
                 tick={{ fill: '#94a3b8', fontSize: 9 }}
-                ticks={[10, 50, 100, 500, 1000, 5000, 10000, 30000]}
-                tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
-                label={{ value: 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
+                ticks={yAxisType === 'tpot'
+                  ? [1, 5, 10, 50, 100, 500, 1000, 5000]
+                  : [10, 50, 100, 500, 1000, 5000, 10000, 30000]}
+                tickFormatter={(value) => yAxisType === 'tpot'
+                  ? (value >= 1000 ? `${(value/1000).toFixed(0)}s` : `${value}ms`)
+                  : (value >= 1000 ? `${(value/1000).toFixed(0)}k` : value)}
+                label={{ value: yAxisType === 'tpot' ? 'Best TPOT (ms)' : 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
                 allowDataOverflow={false}
-                name="bandwidth"
+                name={yAxisType === 'tpot' ? 'tpot' : 'bandwidth'}
               />
               <ZAxis range={[60, 60]} />
               <Tooltip 
@@ -1263,6 +1333,11 @@ export default function App() {
                           <div style={{ color: color, fontSize: '13px', fontWeight: 500 }}>
                             {typeLabel}: {data.bandwidth?.toLocaleString()} GB/s
                           </div>
+                          {yAxisType === 'tpot' && (
+                          <div style={{ color: '#22d3ee', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
+                            Best TPOT: {data.tpot?.toFixed(1)} ms
+                          </div>
+                          )}
                           <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
                             Power: {data.power}W
                           </div>
@@ -1277,7 +1352,9 @@ export default function App() {
                 }}
               />
               
-              {/* Horizontal reference lines for model bandwidth requirements */}
+              {/* Horizontal reference lines for model bandwidth requirements - only in bandwidth mode */}
+              {yAxisType === 'bandwidth' && (
+              <>
               {/* Batch Size=1 line - always shown */}
               <ReferenceLine 
                 y={chartData.bwBS1} 
@@ -1304,6 +1381,8 @@ export default function App() {
                 strokeDasharray="8 4"
                 ifOverflow="extendDomain"
               />
+              </>
+              )}
 
               {/* Device scatter points - blue circles for Peak Bandwidth (HBM/Memory) */}
               <Scatter 
