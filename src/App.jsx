@@ -575,7 +575,65 @@ export default function App() {
   const [hardwareBw, setHardwareBw] = useState(768); // Default A6000
   const [smbu, setSmbu] = useState(16.33); // Fixed S-MBU
   const [numGpus, setNumGpus] = useState(1); // Supply side GPU count
-  const [yAxisType, setYAxisType] = useState('tpot'); // 'bandwidth' or 'tpot'
+  const [yAxisType, setYAxisType] = useState('tpot'); // 'bandwidth', 'tpot', or 'ttft'
+
+  // Real benchmark data points (measured values)
+  const REAL_BENCHMARK_DATA = {
+    // TPOT real data points
+    tpot: [
+      {
+        name: 'Qwen1.5-MoE',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        tpot: 4.0, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'Qwen1.5-MoE',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 32,
+        power: 700,
+        tpot: 15.3, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+    ],
+    // TTFT real data points
+    ttft: [
+      {
+        name: 'Qwen1.5-MoE',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        ttft: 5.9, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'Qwen1.5-MoE',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 32,
+        power: 700,
+        ttft: 107.2, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+    ],
+  };
 
   // CAP Radar Chart selections (3 configs)
   const [capConfig1, setCapConfig1] = useState('qwen3-30b-4xa6000');
@@ -1229,6 +1287,7 @@ export default function App() {
               >
                 <option value="bandwidth">Bandwidth (GB/s)</option>
                 <option value="tpot">TPOT (ms)</option>
+                <option value="ttft">TTFT (ms)</option>
               </select>
             </div>
             
@@ -1265,10 +1324,16 @@ export default function App() {
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span className="text-xs text-slate-300">Multi-GPU Systems (Peak)</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 rounded-full bg-lime-400"></div>
                 <span className="text-xs text-slate-300">Multi-GPU Systems (PCIe)</span>
               </div>
+              {(yAxisType === 'tpot' || yAxisType === 'ttft') && selectedModel === 'qwen1.5-moe' && (
+              <div className="flex items-center gap-2">
+                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-red-500"></div>
+                <span className="text-xs text-slate-300">Measured (Real Benchmark)</span>
+              </div>
+              )}
             </div>
           </div>
           
@@ -1309,23 +1374,23 @@ export default function App() {
                 name="power"
               />
               <YAxis 
-                dataKey={yAxisType === 'tpot' ? 'tpot' : 'bandwidth'}
+                dataKey={yAxisType === 'tpot' ? 'tpot' : (yAxisType === 'ttft' ? 'ttft' : 'bandwidth')}
                 type="number"
                 stroke="#94a3b8"
                 scale="log"
-                domain={yAxisType === 'tpot' 
-                  ? [1, 10000]  // TPOT range in ms
+                domain={yAxisType === 'tpot' || yAxisType === 'ttft'
+                  ? [1, 10000]  // TPOT/TTFT range in ms
                   : [10, Math.max(30000, chartData.fullyActivatedBw * 1.5)]}
                 tick={{ fill: '#94a3b8', fontSize: 9 }}
-                ticks={yAxisType === 'tpot'
+                ticks={yAxisType === 'tpot' || yAxisType === 'ttft'
                   ? [1, 5, 10, 50, 100, 500, 1000, 5000]
                   : [10, 50, 100, 500, 1000, 5000, 10000, 30000]}
-                tickFormatter={(value) => yAxisType === 'tpot'
+                tickFormatter={(value) => yAxisType === 'tpot' || yAxisType === 'ttft'
                   ? (value >= 1000 ? `${(value/1000).toFixed(0)}s` : `${value}ms`)
                   : (value >= 1000 ? `${(value/1000).toFixed(0)}k` : value)}
-                label={{ value: yAxisType === 'tpot' ? 'TPOT (ms)' : 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
+                label={{ value: yAxisType === 'tpot' ? 'TPOT (ms)' : (yAxisType === 'ttft' ? 'TTFT (ms)' : 'Bandwidth (GB/s)'), angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
                 allowDataOverflow={false}
-                name={yAxisType === 'tpot' ? 'tpot' : 'bandwidth'}
+                name={yAxisType === 'tpot' ? 'tpot' : (yAxisType === 'ttft' ? 'ttft' : 'bandwidth')}
               />
               <ZAxis range={[60, 60]} />
               <Tooltip 
@@ -1334,30 +1399,56 @@ export default function App() {
                   if (active && payload && payload.length > 0) {
                     const data = payload[0]?.payload;
                     if (data && data.name) {
+                      // Real benchmark data has 'context' property, theoretical data does not
+                      const isReal = data.context !== undefined;
                       const isPeak = data.type === 'peak';
                       const isDgx = data.name?.includes('DGX');
-                      // DGX Peak: green (#22c55e), DGX PCIe: lime (#84cc16), Single Peak: blue, Single PCIe: orange
-                      const color = isDgx ? (isPeak ? '#22c55e' : '#84cc16') : (isPeak ? '#3b82f6' : '#f97316');
-                      const typeLabel = isPeak ? 'Peak BW (Memory)' : 'PCIe BW';
+                      // DGX Peak: green (#22c55e), DGX PCIe: lime (#84cc16), Single Peak: blue, Single PCIe: orange, Real: red
+                      const color = isReal ? '#ef4444' : (isDgx ? (isPeak ? '#22c55e' : '#84cc16') : (isPeak ? '#3b82f6' : '#f97316'));
+                      const typeLabel = isReal ? 'Real Benchmark' : (isPeak ? 'Peak BW (Memory)' : 'PCIe BW');
                       return (
                         <div style={{ backgroundColor: '#1e293b', border: `2px solid ${color}`, padding: '10px 14px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                           <div style={{ color: color, fontWeight: 600, marginBottom: '6px', fontSize: '14px' }}>
                             {data.name}
                           </div>
+                          {!isReal && (
                           <div style={{ color: color, fontSize: '13px', fontWeight: 500 }}>
                             {typeLabel}: {data.bandwidth?.toLocaleString()} GB/s
                           </div>
-                          {yAxisType === 'tpot' && (
+                          )}
+                          {isReal && data.gpu && (
+                          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
+                            GPU: {data.gpu} (TP={data.tp})
+                          </div>
+                          )}
+                          {isReal && data.engine && (
+                          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
+                            Engine: {data.engine}
+                          </div>
+                          )}
+                          {isReal && data.context && (
+                          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
+                            Context: {data.context}, BS={data.batchSize}
+                          </div>
+                          )}
+                          {(yAxisType === 'tpot' && data.tpot !== undefined) && (
                           <div style={{ color: '#22d3ee', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
                             TPOT: {data.tpot?.toFixed(1)} ms
+                          </div>
+                          )}
+                          {(yAxisType === 'ttft' && data.ttft !== undefined) && (
+                          <div style={{ color: '#22d3ee', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
+                            TTFT: {data.ttft?.toFixed(1)} ms
                           </div>
                           )}
                           <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
                             Power: {data.power}W
                           </div>
+                          {!isReal && data.category && (
                           <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', textTransform: 'capitalize' }}>
                             {data.category?.replace(/-/g, ' ')}
                           </div>
+                          )}
                         </div>
                       );
                     }
@@ -1409,7 +1500,8 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.peakDevices[index];
-                    if (!device || !device.showLabel) return null;
+                    // Hide labels in TTFT mode
+                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
                     
                     // Smart positioning based on device
                     let dy = -15;
@@ -1463,7 +1555,8 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.offloadDevices[index];
-                    if (!device || !device.showLabel) return null;
+                    // Hide labels in TTFT mode
+                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
                     
                     // Smart positioning based on device
                     let dy = -15;
@@ -1512,7 +1605,8 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.dgxPeakDevices[index];
-                    if (!device || !device.showLabel) return null;
+                    // Hide labels in TTFT mode
+                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
                     
                     let dy = -20;
                     let dx = 0;
@@ -1557,7 +1651,8 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.dgxOffloadDevices[index];
-                    if (!device || !device.showLabel) return null;
+                    // Hide labels in TTFT mode
+                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
                     
                     let dy = 25;
                     let dx = 0;
@@ -1589,6 +1684,17 @@ export default function App() {
                   }}
                 />
               </Scatter>
+
+              {/* Real benchmark data points - red triangles for actual measured data (only shown for Qwen1.5-MoE) */}
+              {(yAxisType === 'tpot' || yAxisType === 'ttft') && selectedModel === 'qwen1.5-moe' && (
+              <Scatter 
+                data={(yAxisType === 'tpot' ? REAL_BENCHMARK_DATA.tpot : REAL_BENCHMARK_DATA.ttft).filter(d => d.batchSize === batchSize)}
+                name="Measured (Real Benchmark)"
+                fill="#ef4444"
+                shape="triangle"
+                isAnimationActive={false}
+              />
+              )}
               
             </ScatterChart>
           </ResponsiveContainer>

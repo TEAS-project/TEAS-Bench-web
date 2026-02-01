@@ -82,11 +82,10 @@ export default function Documentation() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-amber-400 text-xl">▲</span>
+                    <span className="text-red-500 text-xl">▲</span>
                     <div>
                       <span className="text-slate-200 font-medium">Triangle dots (Measured):</span>
-                      <span className="text-slate-400 ml-2">Real TPOT from actual system benchmarks with various model configurations</span>
-                      <span className="text-slate-500 ml-2 text-sm">(coming soon)</span>
+                      <span className="text-slate-400 ml-2">Real TPOT/TTFT from actual system benchmarks with various model configurations</span>
                     </div>
                   </div>
                 </div>
