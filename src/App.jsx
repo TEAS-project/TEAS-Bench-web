@@ -575,7 +575,7 @@ export default function App() {
   const [hardwareBw, setHardwareBw] = useState(768); // Default A6000
   const [smbu, setSmbu] = useState(16.33); // Fixed S-MBU
   const [numGpus, setNumGpus] = useState(1); // Supply side GPU count
-  const [yAxisType, setYAxisType] = useState('bandwidth'); // 'bandwidth' or 'tpot'
+  const [yAxisType, setYAxisType] = useState('tpot'); // 'bandwidth' or 'tpot'
 
   // CAP Radar Chart selections (3 configs)
   const [capConfig1, setCapConfig1] = useState('qwen3-30b-4xa6000');
@@ -946,10 +946,22 @@ export default function App() {
       tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 // Convert to ms
     }));
     
+    // Separate DGX devices (multi-GPU systems) for different color
+    const dgxPeakDevices = peakDevicesWithTpot.filter(d => d.name.includes('DGX'));
+    const nonDgxPeakDevices = peakDevicesWithTpot.filter(d => !d.name.includes('DGX'));
+    const dgxOffloadDevices = offloadDevicesWithTpot.filter(d => d.name.includes('DGX'));
+    const nonDgxOffloadDevices = offloadDevicesWithTpot.filter(d => !d.name.includes('DGX'));
+    
     // Reference TPOT value = 100ms (the SLO)
     const refTpotMs = 100;
 
-    return { peakDevices: peakDevicesWithTpot, offloadDevices: offloadDevicesWithTpot, bwBS1, currentBw, fullyActivatedBw, actualBw, reqBwAt100ms, refTpotMs };
+    return { 
+      peakDevices: nonDgxPeakDevices, 
+      offloadDevices: nonDgxOffloadDevices, 
+      dgxPeakDevices, 
+      dgxOffloadDevices,
+      bwBS1, currentBw, fullyActivatedBw, actualBw, reqBwAt100ms, refTpotMs 
+    };
   }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel, inputLen, outputLen, scenario]);
 
   // --- Chart Data: Batch Size vs Bandwidth (shows MoE curve) ---
@@ -1090,7 +1102,7 @@ export default function App() {
             <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">Mixture-of-Experts</a>
             <Link to="/test-time-scaling" className="text-slate-300 hover:text-blue-400 transition-colors">Test Time Scaling</Link>
             <span className="text-slate-500 cursor-not-allowed hidden md:inline">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
-            <span className="text-slate-500 cursor-not-allowed">Documentation <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <Link to="/documentation" className="text-slate-300 hover:text-blue-400 transition-colors">Documentation</Link>
             <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
           </div>
         </div>
@@ -1154,19 +1166,11 @@ export default function App() {
 
         {/* Chart 1: Power vs Bandwidth (MoE-CAP Style) with controls inside */}
         <Card className="relative">
-          <div className="flex justify-between items-start mb-2">
+          <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
               Hardware Map
             </h3>
-            <span className="text-xs text-slate-500 italic">(Tested with SGLang)</span>
-          </div>
-          <p className="text-xs text-slate-400 mb-4 pl-2">Dotted lines represent the required bandwidth at a given batch size, context configuration, and SLO constraint for the selected MoE model. Dots represent hardware options; those above the line have sufficient capability to meet the requirements.</p>
-          
-          <div className="text-xs text-slate-400 mb-4 pl-2 space-y-2">
-            <p><span className="text-blue-400">• HBM bandwidth (blue points):</span> GPU memory capacity is sufficient, or systems like MoE-Infinity achieve near-HBM bandwidth through compute-data transfer overlapping despite limited capacity</p>
-            <p><span className="text-orange-400">• PCIe bandwidth (orange points):</span> Memory capacity is insufficient and offloading is required, making PCIe the bottleneck</p>
-            <p><span className="text-slate-300">• Multi-GPU configurations (e.g., DGX-H100):</span> Scaling out to meet capacity requirements while maintaining HBM-level bandwidth</p>
-            <p className="mt-2 pt-2 border-t border-slate-700">The hardware map serves two purposes: (1) indicate whether a given hardware's bandwidth is sufficient for the target SLO, and (2) show that meeting certain latency requirements may require scaling memory capacity rather than continuously increasing bandwidth per device</p>
+            <Link to="/documentation" className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline">View Documentation</Link>
           </div>
           
           {/* Controls Row - Context Size and Parameters inline */}
@@ -1224,7 +1228,7 @@ export default function App() {
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
               >
                 <option value="bandwidth">Bandwidth (GB/s)</option>
-                <option value="tpot">Best TPOT (ms)</option>
+                <option value="tpot">TPOT (ms)</option>
               </select>
             </div>
             
@@ -1253,9 +1257,17 @@ export default function App() {
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                 <span className="text-xs text-slate-300">Peak Bandwidth (Memory)</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 rounded-full bg-orange-500"></div>
                 <span className="text-xs text-slate-300">PCIe Bandwidth (Offloading)</span>
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-xs text-slate-300">Multi-GPU Systems (Peak)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-lime-400"></div>
+                <span className="text-xs text-slate-300">Multi-GPU Systems (PCIe)</span>
               </div>
             </div>
           </div>
@@ -1311,7 +1323,7 @@ export default function App() {
                 tickFormatter={(value) => yAxisType === 'tpot'
                   ? (value >= 1000 ? `${(value/1000).toFixed(0)}s` : `${value}ms`)
                   : (value >= 1000 ? `${(value/1000).toFixed(0)}k` : value)}
-                label={{ value: yAxisType === 'tpot' ? 'Best TPOT (ms)' : 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
+                label={{ value: yAxisType === 'tpot' ? 'TPOT (ms)' : 'Bandwidth (GB/s)', angle: -90, position: 'insideLeft', offset: -5, fill: '#94a3b8', fontSize: 11 }}
                 allowDataOverflow={false}
                 name={yAxisType === 'tpot' ? 'tpot' : 'bandwidth'}
               />
@@ -1323,7 +1335,9 @@ export default function App() {
                     const data = payload[0]?.payload;
                     if (data && data.name) {
                       const isPeak = data.type === 'peak';
-                      const color = isPeak ? '#3b82f6' : '#f97316';
+                      const isDgx = data.name?.includes('DGX');
+                      // DGX Peak: green (#22c55e), DGX PCIe: lime (#84cc16), Single Peak: blue, Single PCIe: orange
+                      const color = isDgx ? (isPeak ? '#22c55e' : '#84cc16') : (isPeak ? '#3b82f6' : '#f97316');
                       const typeLabel = isPeak ? 'Peak BW (Memory)' : 'PCIe BW';
                       return (
                         <div style={{ backgroundColor: '#1e293b', border: `2px solid ${color}`, padding: '10px 14px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
@@ -1335,7 +1349,7 @@ export default function App() {
                           </div>
                           {yAxisType === 'tpot' && (
                           <div style={{ color: '#22d3ee', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
-                            Best TPOT: {data.tpot?.toFixed(1)} ms
+                            TPOT: {data.tpot?.toFixed(1)} ms
                           </div>
                           )}
                           <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
@@ -1475,6 +1489,95 @@ export default function App() {
                           x={x + dx}
                           y={y + dy}
                           fill="#f97316"
+                          fontSize={10}
+                          fontWeight={600}
+                          textAnchor="middle"
+                        >
+                          {name}
+                        </text>
+                      </>
+                    );
+                  }}
+                />
+              </Scatter>
+
+              {/* DGX systems - green circles for Peak Bandwidth (Multi-GPU) */}
+              <Scatter 
+                data={chartData.dgxPeakDevices}
+                name="DGX Peak Bandwidth"
+                fill="#22c55e"
+                isAnimationActive={false}
+              >
+                <LabelList
+                  content={(props) => {
+                    const { x, y, index } = props;
+                    const device = chartData.dgxPeakDevices[index];
+                    if (!device || !device.showLabel) return null;
+                    
+                    let dy = -20;
+                    let dx = 0;
+                    const name = device.name;
+                    if (name.includes('DGX-A100')) { dy = -15; dx = 0; }
+                    
+                    return (
+                      <>
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={x + dx}
+                          y2={y + dy}
+                          stroke="#22c55e"
+                          strokeWidth={1}
+                          strokeOpacity={0.5}
+                        />
+                        <text
+                          x={x + dx}
+                          y={y + dy}
+                          fill="#22c55e"
+                          fontSize={10}
+                          fontWeight={600}
+                          textAnchor="middle"
+                        >
+                          {name}
+                        </text>
+                      </>
+                    );
+                  }}
+                />
+              </Scatter>
+
+              {/* DGX systems - lime/light green circles for Offloading Bandwidth */}
+              <Scatter 
+                data={chartData.dgxOffloadDevices}
+                name="DGX Offloading Bandwidth"
+                fill="#84cc16"
+                isAnimationActive={false}
+              >
+                <LabelList
+                  content={(props) => {
+                    const { x, y, index } = props;
+                    const device = chartData.dgxOffloadDevices[index];
+                    if (!device || !device.showLabel) return null;
+                    
+                    let dy = 25;
+                    let dx = 0;
+                    const name = device.name;
+                    
+                    return (
+                      <>
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={x + dx}
+                          y2={y + dy}
+                          stroke="#84cc16"
+                          strokeWidth={1}
+                          strokeOpacity={0.5}
+                        />
+                        <text
+                          x={x + dx}
+                          y={y + dy}
+                          fill="#84cc16"
                           fontSize={10}
                           fontWeight={600}
                           textAnchor="middle"
