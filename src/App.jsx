@@ -583,6 +583,7 @@ export default function App() {
     tpot: [
       {
         name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
         context: '4k-1k',
         tp: 1,
         gpu: 'NVIDIA H100-SXM',
@@ -595,6 +596,7 @@ export default function App() {
       },
       {
         name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
         context: '4k-1k',
         tp: 1,
         gpu: 'NVIDIA H100-SXM',
@@ -605,11 +607,64 @@ export default function App() {
         color: '#ef4444', // red for real data
         showLabel: true,
       },
+      {
+        name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
+        context: '13k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        tpot: 4.6, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '13k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        tpot: 4.9, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        tpot: 4.7, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 32,
+        power: 700,
+        tpot: 12.5, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
     ],
     // TTFT real data points
     ttft: [
       {
         name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
         context: '4k-1k',
         tp: 1,
         gpu: 'NVIDIA H100-SXM',
@@ -622,6 +677,7 @@ export default function App() {
       },
       {
         name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
         context: '4k-1k',
         tp: 1,
         gpu: 'NVIDIA H100-SXM',
@@ -629,6 +685,58 @@ export default function App() {
         batchSize: 32,
         power: 700,
         ttft: 107.2, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'Qwen1.5-MoE',
+        model: 'qwen1.5-moe',
+        context: '13k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        ttft: 9.7, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '13k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        ttft: 15.6, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 1,
+        power: 700,
+        ttft: 9.4, // ms
+        color: '#ef4444', // red for real data
+        showLabel: true,
+      },
+      {
+        name: 'DeepSeek-V2-Lite',
+        model: 'deepseek-v2-lite',
+        context: '4k-1k',
+        tp: 1,
+        gpu: 'NVIDIA H100-SXM',
+        engine: 'SGLang v0.5.8',
+        batchSize: 32,
+        power: 700,
+        ttft: 153.0, // ms
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -994,14 +1102,16 @@ export default function App() {
     
     // Add TPOT calculation to each device: TPOT = 0.1s * (reqBwAt100ms / devicePeakBw)
     // TPOT in ms for display
+    // For DeepSeek-V2-Lite, divide TPOT by 1.3 (model-specific correction)
+    const tpotCorrectionFactor = selectedModel === 'deepseek-v2-lite' ? 1.3 : 1.0;
     const peakDevicesWithTpot = peakDevices.map(d => ({
       ...d,
-      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 // Convert to ms
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor // Convert to ms
     }));
     
     const offloadDevicesWithTpot = offloadDevices.map(d => ({
       ...d,
-      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 // Convert to ms
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor // Convert to ms
     }));
     
     // Separate DGX devices (multi-GPU systems) for different color
@@ -1241,8 +1351,8 @@ export default function App() {
                 onChange={(e) => handleScenarioChange(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
               >
-                <option value="5k-ref">5K (4K+1K)</option>
-                <option value="14k-ref">14K (13K+1K)</option>
+                <option value="5k-ref">5K (4K+1K) - GSM8K</option>
+                <option value="14k-ref">14K (13K+1K) - LongBench V2</option>
               </select>
             </div>
             
@@ -1328,7 +1438,7 @@ export default function App() {
                 <div className="w-3 h-3 rounded-full bg-lime-400"></div>
                 <span className="text-xs text-slate-300">Multi-GPU Systems (PCIe)</span>
               </div>
-              {(yAxisType === 'tpot' || yAxisType === 'ttft') && selectedModel === 'qwen1.5-moe' && (
+              {(yAxisType === 'tpot' || yAxisType === 'ttft') && (
               <div className="flex items-center gap-2">
                 <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-red-500"></div>
                 <span className="text-xs text-slate-300">Measured (Real Benchmark)</span>
@@ -1500,13 +1610,14 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.peakDevices[index];
-                    // Hide labels in TTFT mode
+                    // Hide labels in TTFT mode, and hide 4090/5090 labels in TPOT mode
                     if (!device || !device.showLabel || yAxisType === 'ttft') return null;
+                    const name = device.name;
+                    if (yAxisType === 'tpot' && (name.includes('4090') || name.includes('5090'))) return null;
                     
                     // Smart positioning based on device
                     let dy = -15;
                     let dx = 0;
-                    const name = device.name;
                     if (name.includes('DGX-H100')) dy = -20;
                     if (name.includes('MI300X')) { dy = -5; dx = 45; }
                     if (name.includes('H100-SXM')) { dy = -5; dx = 20; }
@@ -1685,10 +1796,14 @@ export default function App() {
                 />
               </Scatter>
 
-              {/* Real benchmark data points - red triangles for actual measured data (only shown for Qwen1.5-MoE) */}
-              {(yAxisType === 'tpot' || yAxisType === 'ttft') && selectedModel === 'qwen1.5-moe' && (
+              {/* Real benchmark data points - red triangles for actual measured data */}
+              {(yAxisType === 'tpot' || yAxisType === 'ttft') && (
               <Scatter 
-                data={(yAxisType === 'tpot' ? REAL_BENCHMARK_DATA.tpot : REAL_BENCHMARK_DATA.ttft).filter(d => d.batchSize === batchSize)}
+                data={(yAxisType === 'tpot' ? REAL_BENCHMARK_DATA.tpot : REAL_BENCHMARK_DATA.ttft).filter(d => 
+                  d.model === selectedModel &&
+                  d.batchSize === batchSize && 
+                  ((scenario === '5k-ref' && d.context === '4k-1k') || (scenario === '14k-ref' && d.context === '13k-1k'))
+                )}
                 name="Measured (Real Benchmark)"
                 fill="#ef4444"
                 shape="triangle"
