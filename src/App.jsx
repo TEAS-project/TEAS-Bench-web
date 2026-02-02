@@ -1531,7 +1531,7 @@ export default function App() {
             </div>
             
             {/* Batch Size */}
-            <div>
+            <div className="w-1/2">
               <label className="block text-xs font-medium text-slate-400 mb-1">Batch Size</label>
               <select 
                 value={batchSize}
