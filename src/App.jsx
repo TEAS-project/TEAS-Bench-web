@@ -1500,7 +1500,7 @@ export default function App() {
           </div>
           
           {/* Controls Row - Context Size and Parameters inline */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-11 gap-2 sm:gap-3 md:gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(13,minmax(0,1fr))] gap-2 sm:gap-3 md:gap-4 mb-4">
             {/* Context Size */}
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-400 mb-1">Context Size</label>
@@ -1530,8 +1530,8 @@ export default function App() {
               </select>
             </div>
             
-            {/* Batch Size - separate cell, field at half width */}
-            <div className="lg:col-span-1">
+            {/* Batch Size - same cell size as others, field at half width */}
+            <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-400 mb-1">Batch Size</label>
               <div className="w-1/2">
                 <select 
@@ -1547,18 +1547,20 @@ export default function App() {
               </div>
             </div>
             
-            {/* Y-Axis - separate cell, next to Batch Size */}
-            <div className="lg:col-span-1">
+            {/* Y-Axis - same cell size as others, field at half width */}
+            <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-400 mb-1">Y-Axis</label>
-              <select 
-                value={yAxisType}
-                onChange={(e) => setYAxisType(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
-              >
-                <option value="bandwidth">Bandwidth (GB/s)</option>
-                <option value="tpot">TPOT (ms)</option>
-                <option value="ttft">TTFT (ms)</option>
-              </select>
+              <div className="w-1/2">
+                <select 
+                  value={yAxisType}
+                  onChange={(e) => setYAxisType(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none"
+                >
+                  <option value="bandwidth">Bandwidth (GB/s)</option>
+                  <option value="tpot">TPOT (ms)</option>
+                  <option value="ttft">TTFT (ms)</option>
+                </select>
+              </div>
             </div>
             
             {/* Target SLO (decode) - only show when bandwidth is selected */}
@@ -1580,7 +1582,7 @@ export default function App() {
             </div>
             )}
             
-            {/* Point Legend - 1.5x width (spans 3 of 11 columns on lg) */}
+            {/* Point Legend - 1.5x width (spans 3 of 13 columns on lg) */}
             <div className="lg:col-span-3 flex flex-col justify-center bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
