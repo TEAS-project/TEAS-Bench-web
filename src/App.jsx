@@ -444,6 +444,9 @@ export default function App() {
       refBwBS64_14k: 938.15008 * (1152.99 / 926.3536), // ~1167.62 (14K)
       refBwBS128_14k: 938.15008 * (1362.71 / 926.3536), // ~1380.07 (14K)
       denseRefBw_14k: 958.35008, // All Experts reference BW (14K)
+      // TTFT calculation params
+      perTokenCompute: 14, // GFLOPs (2 * 7B activated = 14)
+      perTokenKVSize: 0.000131072, // GB (2 * 32 * 128 * 8 * 2 bytes = 131KB)
     },
     'mixtral-8x22b': {
       name: 'Mixtral-8x22B',
@@ -470,6 +473,9 @@ export default function App() {
       refBwBS64_14k: 2824.91264 * (3192.74 / 2804.2688), // ~3216.20 (14K)
       refBwBS128_14k: 2824.91264 * (3559.74 / 2804.2688), // ~3585.79 (14K)
       denseRefBw_14k: 2852.11264, // All Experts reference BW (14K)
+      // TTFT calculation params
+      perTokenCompute: 44, // GFLOPs (2 * 22B activated = 44)
+      perTokenKVSize: 0.000229376, // GB (2 * 56 * 128 * 8 * 2 bytes = 224KB)
     },
     'qwen1.5-moe': {
       name: 'Qwen1.5-MoE',
@@ -496,6 +502,9 @@ export default function App() {
       refBwBS64_14k: 259.12512 * 1.10133, // ~285.38 (14K)
       refBwBS128_14k: 259.12512 * 1.2473, // ~323.24 (14K)
       denseRefBw_14k: 307.52512, // All Experts reference BW (14K)
+      // TTFT calculation params
+      perTokenCompute: 5.4, // GFLOPs (2 * 2.7B activated = 5.4)
+      perTokenKVSize: 0.000196608, // GB (2 * 24 * 128 * 16 * 2 bytes = 192KB)
     },
     'deepseek-r1': {
       name: 'DeepSeek-R1',
@@ -522,6 +531,9 @@ export default function App() {
       refBwBS64_14k: 6789.11616 * 1.1421, // ~7754.0 (14K)
       refBwBS128_14k: 6789.11616 * 1.8807, // ~12766.5 (14K)
       denseRefBw_14k: 14259.51616, // All Experts reference BW (14K)
+      // TTFT calculation params (DeepSeek uses MLA)
+      perTokenCompute: 74, // GFLOPs (2 * 37B activated = 74)
+      perTokenKVSize: 0.000070272, // GB (61 * (512 + 64) * 2 bytes = 68.6KB, MLA format)
     },
     // Estimated models (not in reference table)
     'deepseek-v2-lite': {
@@ -543,6 +555,9 @@ export default function App() {
       refBwBS64: 565.48, // 141.37 * 4
       refBwBS128: 628.68, // 157.17 * 4
       denseRefBw: 651.06, // 16B dense + KV cache (5000 tokens) at TPOT=0.1s
+      // TTFT calculation params (DeepSeek uses MLA)
+      perTokenCompute: 4.8, // GFLOPs (2 * 2.4B activated = 4.8)
+      perTokenKVSize: 0.000031104, // GB (27 * (512 + 64) * 2 bytes = 30.4KB, MLA format)
     },
     'qwen3': {
       name: 'Qwen3-30B-A3B',
@@ -1167,64 +1182,65 @@ export default function App() {
     
     // Device points from benchmark data
     // Peak Bandwidth = HBM/GDDR memory bandwidth (blue circles)
+    // GFLOPS values from spreadsheet for TTFT calculation
     const peakDevices = [
       // Data Center Systems (Multi-GPU)
-      { name: 'NVIDIA DGX-H100', bandwidth: 26800, power: 10200, category: 'datacenter-system', type: 'peak', showLabel: true },
-      { name: 'NVIDIA DGX-A100', bandwidth: 16296, power: 6500, category: 'datacenter-system', type: 'peak', showLabel: false },
+      { name: 'NVIDIA DGX-H100', bandwidth: 26800, power: 10200, gflops: 7.92e6, category: 'datacenter-system', type: 'peak', showLabel: true },
+      { name: 'NVIDIA DGX-A100', bandwidth: 16296, power: 6500, gflops: 2.50e6, category: 'datacenter-system', type: 'peak', showLabel: false },
       // Data Center Cards
-      { name: 'AMD MI300X', bandwidth: 5300, power: 750, category: 'datacenter-card', type: 'peak', showLabel: true },
-      { name: 'NVIDIA H100-SXM', bandwidth: 3350, power: 700, category: 'datacenter-card', type: 'peak', showLabel: true },
-      { name: 'AWS Trainium 2', bandwidth: 2900, power: 480, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 2037, power: 400, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA H100-PCIe', bandwidth: 2000, power: 350, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 1935, power: 300, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A6000', bandwidth: 768, power: 300, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A5000', bandwidth: 768, power: 230, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'AMD MI300X', bandwidth: 5300, power: 750, gflops: null, category: 'datacenter-card', type: 'peak', showLabel: true },
+      { name: 'NVIDIA H100-SXM', bandwidth: 3350, power: 700, gflops: 9.90e5, category: 'datacenter-card', type: 'peak', showLabel: true },
+      { name: 'AWS Trainium 2', bandwidth: 2900, power: 480, gflops: null, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 2037, power: 400, gflops: 3.12e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA H100-PCIe', bandwidth: 2000, power: 350, gflops: 7.57e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 1935, power: 300, gflops: 3.12e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A6000', bandwidth: 768, power: 300, gflops: 1.55e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A5000', bandwidth: 768, power: 230, gflops: 1.11e5, category: 'datacenter-card', type: 'peak', showLabel: false },
       // Personal (Consumer GPUs) - 调整power避免重叠
-      { name: 'NVIDIA RTX 5090', bandwidth: 1790, power: 575, category: 'personal', type: 'peak', showLabel: true },
-      { name: 'NVIDIA RTX 4090', bandwidth: 1010, power: 450, category: 'personal', type: 'peak', showLabel: true },
-      { name: 'NVIDIA RTX 3090Ti', bandwidth: 1010, power: 400, category: 'personal', type: 'peak', showLabel: false },
-      { name: 'NVIDIA RTX 5080', bandwidth: 960, power: 360, category: 'personal', type: 'peak', showLabel: false },
-      { name: 'NVIDIA RTX 3080Ti', bandwidth: 912.4, power: 350, category: 'personal', type: 'peak', showLabel: false },
-      { name: 'NVIDIA RTX 4080', bandwidth: 716.8, power: 320, category: 'personal', type: 'peak', showLabel: false },
+      { name: 'NVIDIA RTX 5090', bandwidth: 1790, power: 575, gflops: 1.68e6, category: 'personal', type: 'peak', showLabel: true },
+      { name: 'NVIDIA RTX 4090', bandwidth: 1010, power: 450, gflops: 6.60e5, category: 'personal', type: 'peak', showLabel: true },
+      { name: 'NVIDIA RTX 3090Ti', bandwidth: 1010, power: 400, gflops: null, category: 'personal', type: 'peak', showLabel: false },
+      { name: 'NVIDIA RTX 5080', bandwidth: 960, power: 360, gflops: 9.00e5, category: 'personal', type: 'peak', showLabel: false },
+      { name: 'NVIDIA RTX 3080Ti', bandwidth: 912.4, power: 350, gflops: null, category: 'personal', type: 'peak', showLabel: false },
+      { name: 'NVIDIA RTX 4080', bandwidth: 716.8, power: 320, gflops: null, category: 'personal', type: 'peak', showLabel: false },
       // SoC (Apple Silicon) - Unified Memory - 调整power避免重叠
-      { name: 'Apple M4 max', bandwidth: 546, power: 90, category: 'soc', type: 'peak', showLabel: true },
-      { name: 'Apple M3 max', bandwidth: 400, power: 70, category: 'soc', type: 'peak', showLabel: false },
-      { name: 'Apple M2 max', bandwidth: 400, power: 50, category: 'soc', type: 'peak', showLabel: false },
-      { name: 'Apple M1 max', bandwidth: 400, power: 35, category: 'soc', type: 'peak', showLabel: false },
+      { name: 'Apple M4 max', bandwidth: 546, power: 90, gflops: null, category: 'soc', type: 'peak', showLabel: true },
+      { name: 'Apple M3 max', bandwidth: 400, power: 70, gflops: null, category: 'soc', type: 'peak', showLabel: false },
+      { name: 'Apple M2 max', bandwidth: 400, power: 50, gflops: null, category: 'soc', type: 'peak', showLabel: false },
+      { name: 'Apple M1 max', bandwidth: 400, power: 35, gflops: null, category: 'soc', type: 'peak', showLabel: false },
       // Autonomous (NVIDIA Jetson)
-      { name: 'NVIDIA Orin AGX', bandwidth: 204.8, power: 60, category: 'autonomous', type: 'peak', showLabel: true },
-      { name: 'NVIDIA Xavier AGX', bandwidth: 136.5, power: 30, category: 'autonomous', type: 'peak', showLabel: false },
-      { name: 'NVIDIA Orin NX', bandwidth: 102.4, power: 25, category: 'autonomous', type: 'peak', showLabel: false },
-      { name: 'NVIDIA Jetson Nano', bandwidth: 25.6, power: 10, category: 'autonomous', type: 'peak', showLabel: true },
+      { name: 'NVIDIA Orin AGX', bandwidth: 204.8, power: 60, gflops: null, category: 'autonomous', type: 'peak', showLabel: true },
+      { name: 'NVIDIA Xavier AGX', bandwidth: 136.5, power: 30, gflops: null, category: 'autonomous', type: 'peak', showLabel: false },
+      { name: 'NVIDIA Orin NX', bandwidth: 102.4, power: 25, gflops: null, category: 'autonomous', type: 'peak', showLabel: false },
+      { name: 'NVIDIA Jetson Nano', bandwidth: 25.6, power: 10, gflops: null, category: 'autonomous', type: 'peak', showLabel: true },
     ];
     
     // Offloading Bandwidth = PCIe/ethernet bandwidth (orange squares)
     const offloadDevices = [
       // Data Center Systems (Multi-GPU with NVLink)
-      { name: 'NVIDIA DGX-H100', bandwidth: 1280, power: 10200, category: 'datacenter-system', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA DGX-A100', bandwidth: 512, power: 6500, category: 'datacenter-system', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA DGX-H100', bandwidth: 1280, power: 10200, gflops: 7.92e6, category: 'datacenter-system', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA DGX-A100', bandwidth: 512, power: 6500, gflops: 2.50e6, category: 'datacenter-system', type: 'pcie', showLabel: false },
       // Data Center Cards (PCIe)
-      { name: 'AMD MI300X', bandwidth: 128, power: 750, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 700, category: 'datacenter-card', type: 'pcie', showLabel: true },
-      { name: 'AWS Trainium 2', bandwidth: 128, power: 480, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 350, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 400, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 300, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A6000', bandwidth: 64, power: 300, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A5000', bandwidth: 64, power: 230, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'AMD MI300X', bandwidth: 128, power: 750, gflops: null, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 700, gflops: 9.90e5, category: 'datacenter-card', type: 'pcie', showLabel: true },
+      { name: 'AWS Trainium 2', bandwidth: 128, power: 480, gflops: null, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 350, gflops: 7.57e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 400, gflops: 3.12e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 300, gflops: 3.12e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A6000', bandwidth: 64, power: 300, gflops: 1.55e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A5000', bandwidth: 64, power: 230, gflops: 1.11e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
       // Personal (Consumer GPUs - PCIe)
-      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 575, category: 'personal', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 360, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 450, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 4080', bandwidth: 64, power: 320, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 3090Ti', bandwidth: 64, power: 400, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 3080Ti', bandwidth: 64, power: 350, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 575, gflops: 1.68e6, category: 'personal', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 360, gflops: 9.00e5, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 450, gflops: 6.60e5, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 4080', bandwidth: 64, power: 320, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 3090Ti', bandwidth: 64, power: 400, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 3080Ti', bandwidth: 64, power: 350, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
       // Autonomous (NVIDIA Jetson)
-      { name: 'NVIDIA Orin AGX', bandwidth: 16, power: 60, category: 'autonomous', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA Xavier AGX', bandwidth: 16, power: 30, category: 'autonomous', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA Orin NX', bandwidth: 16, power: 25, category: 'autonomous', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA Jetson Nano', bandwidth: 4, power: 10, category: 'autonomous', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA Orin AGX', bandwidth: 16, power: 60, gflops: null, category: 'autonomous', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA Xavier AGX', bandwidth: 16, power: 30, gflops: null, category: 'autonomous', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA Orin NX', bandwidth: 16, power: 25, gflops: null, category: 'autonomous', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA Jetson Nano', bandwidth: 4, power: 10, gflops: null, category: 'autonomous', type: 'pcie', showLabel: true },
     ];
 
     // Calculate required bandwidth at SLO=100ms for TPOT calculation
@@ -1262,14 +1278,37 @@ export default function App() {
     // TPOT in ms for display
     // For DeepSeek-V2-Lite, divide TPOT by 1.3 (model-specific correction)
     const tpotCorrectionFactor = selectedModel === 'deepseek-v2-lite' ? 1.3 : 1.0;
+    
+    // Calculate TTFT (Time To First Token) for each device
+    // TTFT = max(compute_time, memory_time)
+    // Compute time = Batch × Input Length × Per Token Compute / Peak GFLOPS
+    // Memory time = Batch × Input Length × Per Token KV Size / Peak Bandwidth
+    const perTokenCompute = MODEL_CONFIG_LOCAL.perTokenCompute; // in GFLOPs
+    const perTokenKVSize = MODEL_CONFIG_LOCAL.perTokenKVSize; // in GB
+    const currentInputLen = is14k ? 13000 : 4750; // Input tokens based on scenario
+    
+    const calculateTTFT = (device) => {
+      if (!device.gflops || !perTokenCompute || !perTokenKVSize) {
+        return null; // Cannot calculate if missing data
+      }
+      // Compute time in seconds: (batch × inputLen × perTokenCompute GFLOPs) / (device GFLOPs/s)
+      const computeTime = (batchSize * currentInputLen * perTokenCompute) / device.gflops;
+      // Memory time in seconds: (batch × inputLen × perTokenKVSize GB) / (device bandwidth GB/s)
+      const memoryTime = (batchSize * currentInputLen * perTokenKVSize) / device.bandwidth;
+      // TTFT = max of the two, converted to ms
+      return Math.max(computeTime, memoryTime) * 1000;
+    };
+    
     const peakDevicesWithTpot = peakDevices.map(d => ({
       ...d,
-      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor // Convert to ms
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor, // Convert to ms
+      ttft: calculateTTFT(d)
     }));
     
     const offloadDevicesWithTpot = offloadDevices.map(d => ({
       ...d,
-      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor // Convert to ms
+      tpot: (refSloSeconds * reqBwAt100ms / d.bandwidth) * 1000 / tpotCorrectionFactor, // Convert to ms
+      ttft: calculateTTFT(d)
     }));
     
     // Separate DGX devices (multi-GPU systems) for different color
@@ -1286,7 +1325,7 @@ export default function App() {
       offloadDevices: nonDgxOffloadDevices, 
       dgxPeakDevices, 
       dgxOffloadDevices,
-      bwBS1, currentBw, fullyActivatedBw, actualBw, reqBwAt100ms, refTpotMs 
+      bwBS1, currentBw, fullyActivatedBw, actualBw, reqBwAt100ms, refTpotMs
     };
   }, [hardwareBw, numGpus, currentSmbu, sloMs, batchSize, selectedModel, inputLen, outputLen, scenario]);
 
@@ -1625,6 +1664,8 @@ export default function App() {
           </div>
           )}
           
+
+          
           <div className="h-[350px] sm:h-[450px] md:h-[500px] lg:h-[550px]">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 10, right: 10, left: 50, bottom: 50 }}>
@@ -1768,9 +1809,16 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.peakDevices[index];
-                    // Hide labels in TTFT mode, and hide 4090/5090 labels in TPOT mode
-                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
+                    // Hide most labels in TTFT mode, show only key devices
+                    if (!device) return null;
                     const name = device.name;
+                    
+                    // In TTFT mode, only show label for RTX 4090
+                    if (yAxisType === 'ttft') {
+                      if (!name.includes('RTX 4090')) return null;
+                    } else {
+                      if (!device.showLabel) return null;
+                    }
                     if (yAxisType === 'tpot' && (name.includes('4090') || name.includes('5090'))) return null;
                     
                     // Smart positioning based on device
@@ -1824,16 +1872,23 @@ export default function App() {
                   content={(props) => {
                     const { x, y, index } = props;
                     const device = chartData.offloadDevices[index];
-                    // Hide labels in TTFT mode
-                    if (!device || !device.showLabel || yAxisType === 'ttft') return null;
+                    if (!device) return null;
+                    const name = device.name;
+                    
+                    // In TTFT mode, only show labels for H100-SXM and RTX 4090
+                    if (yAxisType === 'ttft') {
+                      if (!name.includes('H100-SXM') && !name.includes('RTX 4090')) return null;
+                    } else {
+                      if (!device.showLabel) return null;
+                    }
                     
                     // Smart positioning based on device
                     let dy = -15;
                     let dx = 0;
-                    const name = device.name;
                     if (name.includes('DGX-H100')) dy = 25;
                     if (name.includes('H100-SXM')) { dy = 25; dx = 10; }
                     if (name.includes('5090')) { dy = -10; dx = 5; }
+                    if (name.includes('4090')) { dy = 25; dx = 30; }
                     
                     return (
                       <>
