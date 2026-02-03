@@ -706,7 +706,7 @@ export default function App() {
   };
 
   // --- State ---
-  const [selectedModel, setSelectedModel] = useState('deepseek-r1');
+  const [selectedModel, setSelectedModel] = useState('deepseek-v2-lite');
   const [scenario, setScenario] = useState('5k-ref');
   
   // Inputs - default to 5k reference (4750 + 250 = 5000)
