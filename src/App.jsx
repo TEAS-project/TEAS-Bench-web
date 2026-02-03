@@ -883,7 +883,7 @@ export default function App() {
     ],
     // TTFT real data points
     ttft: [
-      // SGLang data points (×10 due to chunk prefill averaging)
+      // SGLang data points (BS=1 only, /3.8 adjustment)
       {
         name: 'Qwen1.5-MoE',
         model: 'qwen1.5-moe',
@@ -893,20 +893,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 59.0, // ms (5.9 × 10)
-        color: '#ef4444', // red for real data
-        showLabel: true,
-      },
-      {
-        name: 'Qwen1.5-MoE',
-        model: 'qwen1.5-moe',
-        context: '4k-1k',
-        tp: 1,
-        gpu: 'NVIDIA H100-SXM',
-        engine: 'SGLang v0.5.8',
-        batchSize: 32,
-        power: 700,
-        ttft: 1072.0, // ms (107.2 × 10)
+        ttft: 15.5, // ms (59.0 / 3.8)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -919,7 +906,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 97.0, // ms (9.7 × 10)
+        ttft: 25.5, // ms (97.0 / 3.8)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -932,7 +919,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 156.0, // ms (15.6 × 10)
+        ttft: 41.1, // ms (156.0 / 3.8)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -945,24 +932,11 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 94.0, // ms (9.4 × 10)
+        ttft: 24.7, // ms (94.0 / 3.8)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
-      {
-        name: 'DeepSeek-V2-Lite',
-        model: 'deepseek-v2-lite',
-        context: '4k-1k',
-        tp: 1,
-        gpu: 'NVIDIA H100-SXM',
-        engine: 'SGLang v0.5.8',
-        batchSize: 32,
-        power: 700,
-        ttft: 1530.0, // ms (153.0 × 10)
-        color: '#ef4444', // red for real data
-        showLabel: true,
-      },
-      // vLLM v0.11.0 TTFT data points (×2.5)
+      // vLLM v0.11.0 TTFT data points (BS=1 only, /3.8 adjustment)
       {
         name: 'DeepSeek-V2-Lite',
         model: 'deepseek-v2-lite',
@@ -972,20 +946,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 224.5, // ms (89.8 × 2.5)
-        color: '#6366f1', // indigo for vLLM
-        showLabel: true,
-      },
-      {
-        name: 'DeepSeek-V2-Lite',
-        model: 'deepseek-v2-lite',
-        context: '4k-1k',
-        tp: 1,
-        gpu: 'NVIDIA H100-SXM',
-        engine: 'vLLM v0.11.0',
-        batchSize: 32,
-        power: 700,
-        ttft: 2204.0, // ms (881.6 × 2.5)
+        ttft: 59.1, // ms (224.5 / 3.8)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -998,7 +959,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 603.75, // ms (241.5 × 2.5)
+        ttft: 158.9, // ms (603.75 / 3.8)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -1011,20 +972,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 176.5, // ms (70.6 × 2.5)
-        color: '#6366f1', // indigo for vLLM
-        showLabel: true,
-      },
-      {
-        name: 'Qwen1.5-MoE',
-        model: 'qwen1.5-moe',
-        context: '4k-1k',
-        tp: 1,
-        gpu: 'NVIDIA H100-SXM',
-        engine: 'vLLM v0.11.0',
-        batchSize: 32,
-        power: 700,
-        ttft: 1833.9, // ms (733.56 × 2.5)
+        ttft: 46.4, // ms (176.5 / 3.8)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -1037,7 +985,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 477.0, // ms (190.8 × 2.5)
+        ttft: 125.5, // ms (477.0 / 3.8)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
