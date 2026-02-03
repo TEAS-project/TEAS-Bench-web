@@ -236,17 +236,7 @@ function BenchmarkTooltip({ active, payload }) {
 
 const CHART_DESCRIPTION = (
   <>
-    Each datapoint represents a specific combination of sequential and parallel scaling, and number of samples per aggregation step.
-    S=Sequential, P=Parallel, N=Number of samples.
-    <br />
-    1- When given a task, the model is initially asked to generate P responses in parallel.
-    <br />
-    2.1- Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
-    2.2- Repeat step 2.1 P times to generate P new responses.
-    <br />
-    3- Repeat steps 2.1 and 2.2 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
-    <br />
-    4- The final output is a single, final aggregated response at the end of the final stage.
+    Each datapoint represents a specific combination of sequential scaling (S), parallel scaling (P), and number of samples (N) per aggregation step.
   </>
 );
 

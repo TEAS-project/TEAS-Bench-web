@@ -191,8 +191,12 @@ export default function Documentation() {
             <div>
               <h3 className="text-xl font-semibold text-slate-200 mb-2">Hybrid parallel + sequential scaling</h3>
               <p className="leading-relaxed text-slate-400 mb-4">
-                Combine both: run a small number of parallel candidates, then refine or verify the most promising
-                ones over multiple rounds. Often gives a better accuracy–cost frontier, but requires careful
+                Combine both: 1) When given a task, the model is initially asked to generate P responses in parallel. 
+                2) Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
+                3) Repeat step 2 P times to generate P new responses. 
+                4) Repeat steps 2 and 3 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
+                5) The final output is a single, final aggregated response at the end of the final stage.
+                Often gives a better accuracy–cost frontier, but requires careful
                 scheduling (when to stop, how to allocate budget across rounds, and how to handle early exits).
               </p>
               <p className="leading-relaxed text-slate-400">
