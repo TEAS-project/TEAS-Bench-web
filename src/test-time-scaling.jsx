@@ -559,20 +559,9 @@ export function TestTimeScalingSection() {
   return (
     <>
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-6">
-        <div className="flex flex-wrap justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500">
-            Configuration
-          </h2>
-          <button
-            onClick={() => exportTTSBenchmarkData(selectedRows, selection)}
-            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors"
-            title="Download benchmark data as CSV"
-            disabled={selectedRows.length === 0}
-          >
-            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Download CSV</span>
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-4">
+          Accuracy–Performance Trade-off
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <SelectControl
             label="Model"

@@ -9,6 +9,7 @@ import {
 import {
   Activity, Server, Settings, Cpu, Info, Zap, Percent, Github, Download
 } from 'lucide-react';
+import { BENCHMARK_ROWS } from './data/tts-benchmarks/index.js';
 import { TestTimeScalingSection } from './test-time-scaling.jsx';
 
 const Card = ({ children, className = "" }) => (
@@ -140,6 +141,34 @@ const exportAllMoEData = (chartData, modelName, scenario, batchSize, capConfigs,
   
   const allData = [...hardwareData, ...capData];
   downloadCSV(allData, `moe-benchmark-all-${dateStr}.csv`);
+};
+
+// Export all Test Time Scaling benchmark rows in one CSV
+const exportAllTTSData = () => {
+  const dateStr = getCurrentDateStr();
+  
+  const rows = BENCHMARK_ROWS.map(row => {
+    const meta = row.meta || {};
+    return {
+      date: dateStr,
+      section: 'Test-Time-Scaling',
+      dataset: row.dataset,
+      model: row.model,
+      quantization: row.quant,
+      inference_engine: row.engine,
+      questions_per_hour: row.questionsPerHour,
+      accuracy_percent: row.accuracy,
+      gpu: meta.gpu || 'N/A',
+      gpu_count: meta.gpuCount ?? 'N/A',
+      sequential: meta.sequential ?? 'N/A',
+      parallel: meta.parallel ?? 'N/A',
+      samples: meta.samples ?? 'N/A',
+      max_tokens: meta.maxTokens ?? 'N/A',
+      tools: meta.tools ?? 'N/A',
+    };
+  });
+  
+  downloadCSV(rows, `test-time-scaling-all-${dateStr}.csv`);
 };
 
 // LongBench v2 benchmark data (SGLang) - defined outside component for stability
@@ -2354,6 +2383,14 @@ export default function App() {
               <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-400">
                 Test Time Scaling
               </h1>
+              <button
+                onClick={exportAllTTSData}
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors shrink-0"
+                title="Download all test time scaling benchmark data as CSV"
+              >
+                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download CSV</span>
+              </button>
             </div>
           </header>
           <TestTimeScalingSection />
