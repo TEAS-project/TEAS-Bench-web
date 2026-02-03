@@ -7,8 +7,9 @@ import {
   ScatterChart, ZAxis
 } from 'recharts';
 import {
-  Activity, Server, Settings, Cpu, Info, Zap, Percent, Github
+  Activity, Server, Settings, Cpu, Info, Zap, Percent, Github, Download
 } from 'lucide-react';
+import { BENCHMARK_ROWS } from './data/tts-benchmarks/index.js';
 import { TestTimeScalingSection } from './test-time-scaling.jsx';
 
 const Card = ({ children, className = "" }) => (
@@ -44,6 +45,131 @@ const ScenarioButton = ({ active, onClick, label, desc }) => (
     <div className="text-xs opacity-70 mt-1 hidden sm:block">{desc}</div>
   </button>
 );
+
+// --- CSV Download Utilities ---
+const escapeCSVField = (field) => {
+  if (field === null || field === undefined) return '';
+  const str = String(field);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+const downloadCSV = (data, filename) => {
+  if (!data || data.length === 0) return;
+  
+  const headers = Object.keys(data[0]);
+  const csvRows = [
+    headers.map(escapeCSVField).join(','),
+    ...data.map(row => headers.map(h => escapeCSVField(row[h])).join(','))
+  ];
+  
+  const csvContent = csvRows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const getCurrentDateStr = () => {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+};
+
+// Export all MoE benchmark data (Hardware Map + CAP Radar) in one CSV
+const exportAllMoEData = (chartData, modelName, scenario, batchSize, capConfigs, capDataset) => {
+  const dateStr = getCurrentDateStr();
+  
+  // Hardware Map data
+  const allDevices = [
+    ...chartData.peakDevices.map(d => ({ ...d, bandwidth_type: 'Peak (HBM)' })),
+    ...chartData.offloadDevices.map(d => ({ ...d, bandwidth_type: 'Offload (PCIe)' })),
+    ...chartData.dgxPeakDevices.map(d => ({ ...d, bandwidth_type: 'Peak (HBM)' })),
+    ...chartData.dgxOffloadDevices.map(d => ({ ...d, bandwidth_type: 'Offload (PCIe)' })),
+  ];
+  
+  const hardwareData = allDevices.map(device => ({
+    date: dateStr,
+    section: 'Hardware-Map',
+    dataset: scenario === '14k-ref' ? 'LongBench-v2' : 'GSM8K',
+    model: modelName,
+    precision: 'N/A',
+    hardware: device.name,
+    inference_system: 'N/A',
+    category: device.category,
+    bandwidth_type: device.bandwidth_type,
+    context_size: scenario === '14k-ref' ? '14K' : '5K',
+    batch_size: batchSize,
+    accuracy_percent: 'N/A',
+    cost: device.power,
+    cost_unit: 'Watts',
+    bandwidth_gbs: device.bandwidth,
+    gflops: device.gflops || 'N/A',
+    tpot_ms: device.tpot ? device.tpot.toFixed(2) : 'N/A',
+    ttft_ms: device.ttft ? device.ttft.toFixed(2) : 'N/A',
+    throughput_tokens_per_sec: 'N/A',
+  }));
+  
+  // CAP Radar data
+  const capData = Object.entries(capConfigs).map(([key, config]) => ({
+    date: dateStr,
+    section: 'CAP-Radar',
+    dataset: capDataset === 'longbench-v2' ? 'LongBench-v2' : 'GSM8K',
+    model: config.model,
+    precision: config.precision,
+    hardware: config.gpu,
+    inference_system: config.system,
+    category: 'benchmark',
+    bandwidth_type: 'N/A',
+    context_size: capDataset === 'longbench-v2' ? '14K' : '5K',
+    batch_size: config.batchSize || 'N/A',
+    accuracy_percent: config.accuracy,
+    cost: config.cost,
+    cost_unit: capDataset === 'longbench-v2' ? 'Watts' : 'USD',
+    bandwidth_gbs: 'N/A',
+    gflops: 'N/A',
+    tpot_ms: config.tpot ? (config.tpot * 1000).toFixed(2) : 'N/A',
+    ttft_ms: 'N/A',
+    throughput_tokens_per_sec: config.throughput,
+  }));
+  
+  const allData = [...hardwareData, ...capData];
+  downloadCSV(allData, `moe-benchmark-all-${dateStr}.csv`);
+};
+
+// Export all Test Time Scaling benchmark rows in one CSV
+const exportAllTTSData = () => {
+  const dateStr = getCurrentDateStr();
+  
+  const rows = BENCHMARK_ROWS.map(row => {
+    const meta = row.meta || {};
+    return {
+      date: dateStr,
+      section: 'Test-Time-Scaling',
+      dataset: row.dataset,
+      model: row.model,
+      quantization: row.quant,
+      inference_engine: row.engine,
+      questions_per_hour: row.questionsPerHour,
+      accuracy_percent: row.accuracy,
+      gpu: meta.gpu || 'N/A',
+      gpu_count: meta.gpuCount ?? 'N/A',
+      sequential: meta.sequential ?? 'N/A',
+      parallel: meta.parallel ?? 'N/A',
+      samples: meta.samples ?? 'N/A',
+      max_tokens: meta.maxTokens ?? 'N/A',
+      tools: meta.tools ?? 'N/A',
+    };
+  });
+  
+  downloadCSV(rows, `test-time-scaling-all-${dateStr}.csv`);
+};
 
 // LongBench v2 benchmark data (SGLang) - defined outside component for stability
 const LONGBENCH_CONFIGS = {
@@ -580,7 +706,7 @@ export default function App() {
   };
 
   // --- State ---
-  const [selectedModel, setSelectedModel] = useState('deepseek-r1');
+  const [selectedModel, setSelectedModel] = useState('deepseek-v2-lite');
   const [scenario, setScenario] = useState('5k-ref');
   
   // Inputs - default to 5k reference (4750 + 250 = 5000)
@@ -1535,6 +1661,14 @@ export default function App() {
               <Github className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>GitHub</span>
             </a>
+            <button
+              onClick={() => exportAllMoEData(chartData, MODEL_CONFIG.name, scenario, batchSize, CAP_CONFIGS, capDataset)}
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors"
+              title="Download all benchmark data as CSV"
+            >
+              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Download CSV</span>
+            </button>
             <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400 hidden sm:inline">
               {MODEL_CONFIG.name}
             </span>
@@ -2251,6 +2385,14 @@ export default function App() {
               <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-400">
                 Test Time Scaling
               </h1>
+              <button
+                onClick={exportAllTTSData}
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors shrink-0"
+                title="Download all test time scaling benchmark data as CSV"
+              >
+                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download CSV</span>
+              </button>
             </div>
           </header>
           <TestTimeScalingSection />

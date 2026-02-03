@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -13,6 +13,67 @@ import {
   LabelList,
 } from "recharts";
 import { BENCHMARK_ROWS } from "./data/tts-benchmarks/index.js";
+
+// --- CSV Download Utilities ---
+const escapeCSVField = (field) => {
+  if (field === null || field === undefined) return '';
+  const str = String(field);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+const downloadCSV = (data, filename) => {
+  if (!data || data.length === 0) return;
+  
+  const headers = Object.keys(data[0]);
+  const csvRows = [
+    headers.map(escapeCSVField).join(','),
+    ...data.map(row => headers.map(h => escapeCSVField(row[h])).join(','))
+  ];
+  
+  const csvContent = csvRows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const getCurrentDateStr = () => {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+};
+
+// Export Test Time Scaling benchmark data
+const exportTTSBenchmarkData = (rows, selection) => {
+  const dateStr = getCurrentDateStr();
+  const data = rows.map((row) => ({
+    date: dateStr,
+    benchmark: 'Test-Time-Scaling',
+    dataset: selection.dataset,
+    model: selection.model,
+    quantization: selection.quant,
+    inference_engine: selection.engine,
+    hardware: row.meta?.gpu || 'N/A',
+    gpu_count: row.meta?.gpuCount || 'N/A',
+    questions_per_hour: row.questionsPerHour,
+    accuracy_percent: row.accuracy,
+    sequential_steps: row.meta?.sequential || 'N/A',
+    parallel_branches: row.meta?.parallel || 'N/A',
+    samples_per_step: row.meta?.samples || 'N/A',
+    max_tokens: row.meta?.maxTokens || 'N/A',
+    tools: row.meta?.tools || 'N/A',
+  }));
+  
+  downloadCSV(data, `tts-${selection.model}-${selection.dataset}-benchmark-${dateStr}.csv`);
+};
+
 /** --- Constants (outside the component) --- */
 
 const Card = ({ children, className = "" }) => (
@@ -405,11 +466,24 @@ const PageContent = ({
   dataset,
   setDataset,
   selectionLabel,
+  selection,
+  selectedRows,
 }) => (
   <div className="py-6 sm:py-8">
-    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400">
-      Test Time Scaling
-    </h1>
+    <div className="flex flex-wrap justify-between items-start mb-2">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400">
+        Test Time Scaling
+      </h1>
+      <button
+        onClick={() => exportTTSBenchmarkData(selectedRows, selection)}
+        className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors"
+        title="Download benchmark data as CSV"
+        disabled={selectedRows.length === 0}
+      >
+        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+        <span className="hidden sm:inline">Download CSV</span>
+      </button>
+    </div>
 
     <div className="inline-flex items-center px-2 py-1 mb-6 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">
       {selectionLabel}
@@ -486,7 +560,7 @@ export function TestTimeScalingSection() {
     <>
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-6">
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-4">
-          Configuration
+          Accuracy–Performance Trade-off
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <SelectControl
@@ -565,6 +639,8 @@ export default function Test_Time_Scaling() {
           dataset={dataset}
           setDataset={setDataset}
           selectionLabel={selectionLabel}
+          selection={selection}
+          selectedRows={selectedRows}
         />
 
         <ChartSection
