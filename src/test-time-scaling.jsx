@@ -234,148 +234,113 @@ function BenchmarkTooltip({ active, payload }) {
 
 
 
-function AccuracyVsQphChartCard({ chartData }) {
+const CHART_DESCRIPTION = (
+  <>
+    Each datapoint represents a specific combination of sequential and parallel scaling, and number of samples per aggregation step.
+    S=Sequential, P=Parallel, N=Number of samples.
+    <br />
+    1- When given a task, the model is initially asked to generate P responses in parallel.
+    <br />
+    2.1- Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
+    2.2- Repeat step 2.1 P times to generate P new responses.
+    <br />
+    3- Repeat steps 2.1 and 2.2 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
+    <br />
+    4- The final output is a single, final aggregated response at the end of the final stage.
+  </>
+);
+
+function AccuracyVsQphChartCard({ chartData, embed }) {
   const hasData = chartData && chartData.length > 0;
+
+  const chartOnly = (
+    hasData ? (
+      <div className="h-[400px] sm:h-[500px] md:h-[600px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 10, right: 20, left: 30, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+
+            <XAxis
+              dataKey="questionsPerHour"
+              type="number"
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              label={{
+                value: "Questions per hour",
+                position: "insideBottom",
+                offset: -15,
+                fill: "#94a3b8",
+                fontSize: 12,
+              }}
+              domain={[0, (dataMax) => Math.max(1, Math.ceil(dataMax * 1.1))]}
+            />
+
+            <YAxis
+              dataKey="accuracy"
+              type="number"
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              label={{
+                value: "Accuracy (%)",
+                angle: -90,
+                position: "insideLeft",
+                offset: -5,
+                fill: "#94a3b8",
+                fontSize: 12,
+              }}
+              domain={[0, 100]}
+            />
+
+            <Tooltip
+              cursor={{ strokeDasharray: "3 3", stroke: "#64748b" }}
+              content={<BenchmarkTooltip />}
+            />
+
+            <Scatter data={chartData} name="Runs" isAnimationActive={false}>
+              <LabelList
+                content={(props) => {
+                  const { x, y, index } = props;
+                  const p = chartData[index];
+                  if (!p) return null;
+                  if (!p.showLabel) return null;
+                  const text = p.labelText ?? "";
+                  const dx = p.labelDx ?? 10;
+                  const dy = p.labelDy ?? -12;
+                  return (
+                    <g>
+                      <line x1={x} y1={y} x2={x + dx} y2={y + dy} stroke="#94a3b8" strokeWidth={1} opacity={0.6} />
+                      <rect x={x + dx - 2} y={y + dy - 15} width={Math.max(40, text.length * 7)} height={16} rx={3} fill="#0f172a" stroke="#334155" opacity={0.95} />
+                      <text x={x + dx + 4} y={y + dy - 2} fill="#e2e8f0" fontSize={11} fontWeight={600}>{text}</text>
+                    </g>
+                  );
+                }}
+              />
+              {chartData.map((p, i) => (
+                <Cell key={i} fill={p.color || "#3b82f6"} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    ) : (
+      <div className="text-sm text-slate-400">
+        No benchmark data found for this selection. Add a row to{" "}
+        <code className="text-slate-200">BENCHMARK_ROWS</code>.
+      </div>
+    )
+  );
+
+  if (embed) return chartOnly;
 
   return (
     <Card className="mb-8">
       <div className="flex justify-between items-start mb-4">
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
-          Test-time Scaling – Accuracy vs Questions per Hour for various scaling settings
+          Accuracy–Performance Trade-off
           <br />
-          <span className="font-normal text-slate-400 text-sm">
-            Each datapoint represents a specific combination of sequential and parallel scaling, and number of samples per aggregation step.
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            S=Sequential, P=Parallel, N=Number of samples
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            1- When given a task, the model is initially asked to generate P responses in parallel.
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            2.1- Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            2.2- Repeat step 2.1 P times to generate P new responses.
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            3- Repeat steps 2.1 and 2.2 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
-          </span>
-          <br />
-          <span className="font-normal text-slate-400 text-sm">
-            4- The final output is a single, final aggregated response at the end of the final stage.
-          </span>
+          <span className="font-normal text-slate-400 text-sm">{CHART_DESCRIPTION}</span>
         </h2>
         <Link to="/documentation" className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline shrink-0">View Documentation</Link>
       </div>
-
-      {hasData ? (
-        <div className="h-[400px] sm:h-[500px] md:h-[600px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 10, right: 20, left: 30, bottom: 40 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-
-              <XAxis
-                dataKey="questionsPerHour"
-                type="number"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                label={{
-                  value: "Questions per hour",
-                  position: "insideBottom",
-                  offset: -15,
-                  fill: "#94a3b8",
-                  fontSize: 12,
-                }}
-                domain={[0, (dataMax) => Math.max(1, Math.ceil(dataMax * 1.1))]}
-              />
-
-              <YAxis
-                dataKey="accuracy"
-                type="number"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                label={{
-                  value: "Accuracy (%)",
-                  angle: -90,
-                  position: "insideLeft",
-                  offset: -5,
-                  fill: "#94a3b8",
-                  fontSize: 12,
-                }}
-                domain={[0, 100]}
-              />
-
-              <Tooltip
-                cursor={{ strokeDasharray: "3 3", stroke: "#64748b" }}
-                content={<BenchmarkTooltip />}
-              />
-
-              {/* ✅ render ALL points */}
-              <Scatter data={chartData} name="Runs" isAnimationActive={false}>
-                <LabelList
-                  content={(props) => {
-                    const { x, y, index } = props;
-                    const p = chartData[index];
-                    if (!p) return null;
-
-                    // ✅ only label selected points (Pareto frontier)
-                    if (!p.showLabel) return null;
-
-                    const text = p.labelText ?? "";
-                    const dx = p.labelDx ?? 10;
-                    const dy = p.labelDy ?? -12;
-
-                    return (
-                      <g>
-                        <line
-                          x1={x}
-                          y1={y}
-                          x2={x + dx}
-                          y2={y + dy}
-                          stroke="#94a3b8"
-                          strokeWidth={1}
-                          opacity={0.6}
-                        />
-                        <rect
-                          x={x + dx - 2}
-                          y={y + dy - 15}
-                          width={Math.max(40, text.length * 7)}
-                          height={16}
-                          rx={3}
-                          fill="#0f172a"
-                          stroke="#334155"
-                          opacity={0.95}
-                        />
-                        <text
-                          x={x + dx + 4}
-                          y={y + dy - 2}
-                          fill="#e2e8f0"
-                          fontSize={11}
-                          fontWeight={600}
-                        >
-                          {text}
-                        </text>
-                      </g>
-                    );
-                  }}
-                />
-                {chartData.map((p, i) => (
-                  <Cell key={i} fill={p.color || "#3b82f6"} />
-                ))}
-              </Scatter>
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div className="text-sm text-slate-400">
-          No benchmark data found for this selection. Add a row to{" "}
-          <code className="text-slate-200">BENCHMARK_ROWS</code>.
-        </div>
-      )}
+      {chartOnly}
     </Card>
   );
 }
@@ -387,7 +352,7 @@ function AccuracyVsQphChartCard({ chartData }) {
  *  Add more charts later by adding another entry here.
  */
 
-function ChartSection({ selection, selectionLabel, selectedRows }) {
+function ChartSection({ selection, selectionLabel, selectedRows, embed }) {
   const chartData = useMemo(() => {
     if (!selectedRows?.length) return [];
 
@@ -449,7 +414,7 @@ function ChartSection({ selection, selectionLabel, selectedRows }) {
     });
   }, [selectedRows]);
 
-  return <AccuracyVsQphChartCard chartData={chartData} />;
+  return <AccuracyVsQphChartCard chartData={chartData} embed={embed} />;
 }
 
 /** -------------------------
@@ -557,47 +522,54 @@ export function TestTimeScalingSection() {
   const selectedRows = useMemo(() => filterBenchmarkRows(selection), [selection]);
 
   return (
-    <>
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-6">
-        <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-4">
-          Accuracy–Performance Trade-off
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <SelectControl
-            label="Model"
-            value={ttsModel}
-            onChange={setTtsModel}
-            options={TTS_MODEL_OPTIONS}
-          />
-          <SelectControl
-            label="Quantization"
-            value={ttsQuant}
-            onChange={setTtsQuant}
-            options={TTS_QUANT_OPTIONS}
-          />
-          <SelectControl
-            label="Dataset"
-            value={dataset}
-            onChange={setDataset}
-            options={DATASET_OPTIONS}
-          />
-          <SelectControl
-            label="Inference engine"
-            value={ttsEngine}
-            onChange={setTtsEngine}
-            options={TTS_ENGINE_OPTIONS}
-          />
+    <Card className="mb-8">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-2">
+            Accuracy–Performance Trade-off
+          </h2>
+          <p className="text-xs text-slate-400 pl-2 max-w-4xl">
+            {CHART_DESCRIPTION}
+          </p>
         </div>
-        <div className="inline-flex items-center px-2 py-1 mt-3 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">
-          {selectionLabel}
-        </div>
+        <Link to="/documentation" className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline shrink-0">View Documentation</Link>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+        <SelectControl
+          label="Model"
+          value={ttsModel}
+          onChange={setTtsModel}
+          options={TTS_MODEL_OPTIONS}
+        />
+        <SelectControl
+          label="Quantization"
+          value={ttsQuant}
+          onChange={setTtsQuant}
+          options={TTS_QUANT_OPTIONS}
+        />
+        <SelectControl
+          label="Dataset"
+          value={dataset}
+          onChange={setDataset}
+          options={DATASET_OPTIONS}
+        />
+        <SelectControl
+          label="Inference engine"
+          value={ttsEngine}
+          onChange={setTtsEngine}
+          options={TTS_ENGINE_OPTIONS}
+        />
+      </div>
+      <div className="inline-flex items-center px-2 py-1 mb-4 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">
+        {selectionLabel}
       </div>
       <ChartSection
         selection={selection}
         selectionLabel={selectionLabel}
         selectedRows={selectedRows}
+        embed
       />
-    </>
+    </Card>
   );
 }
 
