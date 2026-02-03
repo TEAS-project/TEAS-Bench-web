@@ -883,6 +883,7 @@ export default function App() {
     ],
     // TTFT real data points
     ttft: [
+      // SGLang data points (×10 due to chunk prefill averaging)
       {
         name: 'Qwen1.5-MoE',
         model: 'qwen1.5-moe',
@@ -892,7 +893,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 5.9, // ms
+        ttft: 59.0, // ms (5.9 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -905,7 +906,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 32,
         power: 700,
-        ttft: 107.2, // ms
+        ttft: 1072.0, // ms (107.2 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -918,7 +919,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 9.7, // ms
+        ttft: 97.0, // ms (9.7 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -931,7 +932,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 15.6, // ms
+        ttft: 156.0, // ms (15.6 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -944,7 +945,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 9.4, // ms
+        ttft: 94.0, // ms (9.4 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -957,11 +958,11 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 32,
         power: 700,
-        ttft: 153.0, // ms
+        ttft: 1530.0, // ms (153.0 × 10)
         color: '#ef4444', // red for real data
         showLabel: true,
       },
-      // vLLM v0.11.0 TTFT data points
+      // vLLM v0.11.0 TTFT data points (×2.5)
       {
         name: 'DeepSeek-V2-Lite',
         model: 'deepseek-v2-lite',
@@ -971,7 +972,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 89.8, // ms
+        ttft: 224.5, // ms (89.8 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -984,7 +985,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 32,
         power: 700,
-        ttft: 881.6, // ms
+        ttft: 2204.0, // ms (881.6 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -997,7 +998,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 241.5, // ms
+        ttft: 603.75, // ms (241.5 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -1010,7 +1011,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 70.6, // ms
+        ttft: 176.5, // ms (70.6 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -1023,7 +1024,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 32,
         power: 700,
-        ttft: 733.56, // ms
+        ttft: 1833.9, // ms (733.56 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
@@ -1036,7 +1037,7 @@ export default function App() {
         engine: 'vLLM v0.11.0',
         batchSize: 1,
         power: 700,
-        ttft: 190.8, // ms
+        ttft: 477.0, // ms (190.8 × 2.5)
         color: '#6366f1', // indigo for vLLM
         showLabel: true,
       },
