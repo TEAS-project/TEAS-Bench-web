@@ -1184,24 +1184,25 @@ export default function App() {
     // Device points from benchmark data
     // Peak Bandwidth = HBM/GDDR memory bandwidth (blue circles)
     // GFLOPS values from spreadsheet for TTFT calculation
+    // GFLOPS values are BF16 Tensor Core performance (FP32 × 2)
     const peakDevices = [
       // Data Center Systems (Multi-GPU)
-      { name: 'NVIDIA DGX-H100', bandwidth: 26800, power: 10200, gflops: 7.92e6, category: 'datacenter-system', type: 'peak', showLabel: true },
-      { name: 'NVIDIA DGX-A100', bandwidth: 16296, power: 6500, gflops: 2.50e6, category: 'datacenter-system', type: 'peak', showLabel: false },
+      { name: 'NVIDIA DGX-H100', bandwidth: 26800, power: 10200, gflops: 1.584e7, category: 'datacenter-system', type: 'peak', showLabel: true },
+      { name: 'NVIDIA DGX-A100', bandwidth: 16296, power: 6500, gflops: 5.00e6, category: 'datacenter-system', type: 'peak', showLabel: false },
       // Data Center Cards
       { name: 'AMD MI300X', bandwidth: 5300, power: 750, gflops: null, category: 'datacenter-card', type: 'peak', showLabel: true },
-      { name: 'NVIDIA H100-SXM', bandwidth: 3350, power: 700, gflops: 9.90e5, category: 'datacenter-card', type: 'peak', showLabel: true },
+      { name: 'NVIDIA H100-SXM', bandwidth: 3350, power: 700, gflops: 1.98e6, category: 'datacenter-card', type: 'peak', showLabel: true },
       { name: 'AWS Trainium 2', bandwidth: 2900, power: 480, gflops: null, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 2037, power: 400, gflops: 3.12e5, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA H100-PCIe', bandwidth: 2000, power: 350, gflops: 7.57e5, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 1935, power: 300, gflops: 3.12e5, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A6000', bandwidth: 768, power: 300, gflops: 1.55e5, category: 'datacenter-card', type: 'peak', showLabel: false },
-      { name: 'NVIDIA A5000', bandwidth: 768, power: 230, gflops: 1.11e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 2037, power: 400, gflops: 6.24e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA H100-PCIe', bandwidth: 2000, power: 350, gflops: 1.514e6, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 1935, power: 300, gflops: 6.24e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A6000', bandwidth: 768, power: 300, gflops: 3.10e5, category: 'datacenter-card', type: 'peak', showLabel: false },
+      { name: 'NVIDIA A5000', bandwidth: 768, power: 230, gflops: 2.22e5, category: 'datacenter-card', type: 'peak', showLabel: false },
       // Personal (Consumer GPUs) - 调整power避免重叠
-      { name: 'NVIDIA RTX 5090', bandwidth: 1790, power: 575, gflops: 1.68e6, category: 'personal', type: 'peak', showLabel: true },
-      { name: 'NVIDIA RTX 4090', bandwidth: 1010, power: 450, gflops: 6.60e5, category: 'personal', type: 'peak', showLabel: true },
+      { name: 'NVIDIA RTX 5090', bandwidth: 1790, power: 575, gflops: 3.36e6, category: 'personal', type: 'peak', showLabel: true },
+      { name: 'NVIDIA RTX 4090', bandwidth: 1010, power: 450, gflops: 1.32e6, category: 'personal', type: 'peak', showLabel: true },
       { name: 'NVIDIA RTX 3090Ti', bandwidth: 1010, power: 400, gflops: null, category: 'personal', type: 'peak', showLabel: false },
-      { name: 'NVIDIA RTX 5080', bandwidth: 960, power: 360, gflops: 9.00e5, category: 'personal', type: 'peak', showLabel: false },
+      { name: 'NVIDIA RTX 5080', bandwidth: 960, power: 360, gflops: 1.80e6, category: 'personal', type: 'peak', showLabel: false },
       { name: 'NVIDIA RTX 3080Ti', bandwidth: 912.4, power: 350, gflops: null, category: 'personal', type: 'peak', showLabel: false },
       { name: 'NVIDIA RTX 4080', bandwidth: 716.8, power: 320, gflops: null, category: 'personal', type: 'peak', showLabel: false },
       // SoC (Apple Silicon) - Unified Memory - 调整power避免重叠
@@ -1217,23 +1218,24 @@ export default function App() {
     ];
     
     // Offloading Bandwidth = PCIe/ethernet bandwidth (orange squares)
+    // GFLOPS values are BF16 Tensor Core performance (FP32 × 2)
     const offloadDevices = [
       // Data Center Systems (Multi-GPU with NVLink)
-      { name: 'NVIDIA DGX-H100', bandwidth: 1280, power: 10200, gflops: 7.92e6, category: 'datacenter-system', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA DGX-A100', bandwidth: 512, power: 6500, gflops: 2.50e6, category: 'datacenter-system', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA DGX-H100', bandwidth: 1280, power: 10200, gflops: 1.584e7, category: 'datacenter-system', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA DGX-A100', bandwidth: 512, power: 6500, gflops: 5.00e6, category: 'datacenter-system', type: 'pcie', showLabel: false },
       // Data Center Cards (PCIe)
       { name: 'AMD MI300X', bandwidth: 128, power: 750, gflops: null, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 700, gflops: 9.90e5, category: 'datacenter-card', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA H100-SXM', bandwidth: 128, power: 700, gflops: 1.98e6, category: 'datacenter-card', type: 'pcie', showLabel: true },
       { name: 'AWS Trainium 2', bandwidth: 128, power: 480, gflops: null, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 350, gflops: 7.57e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 400, gflops: 3.12e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 300, gflops: 3.12e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A6000', bandwidth: 64, power: 300, gflops: 1.55e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA A5000', bandwidth: 64, power: 230, gflops: 1.11e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA H100-PCIe', bandwidth: 128, power: 350, gflops: 1.514e6, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-SXM4', bandwidth: 64, power: 400, gflops: 6.24e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A100-80G-PCIe', bandwidth: 64, power: 300, gflops: 6.24e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A6000', bandwidth: 64, power: 300, gflops: 3.10e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA A5000', bandwidth: 64, power: 230, gflops: 2.22e5, category: 'datacenter-card', type: 'pcie', showLabel: false },
       // Personal (Consumer GPUs - PCIe)
-      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 575, gflops: 1.68e6, category: 'personal', type: 'pcie', showLabel: true },
-      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 360, gflops: 9.00e5, category: 'personal', type: 'pcie', showLabel: false },
-      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 450, gflops: 6.60e5, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 5090', bandwidth: 128, power: 575, gflops: 3.36e6, category: 'personal', type: 'pcie', showLabel: true },
+      { name: 'NVIDIA RTX 5080', bandwidth: 128, power: 360, gflops: 1.80e6, category: 'personal', type: 'pcie', showLabel: false },
+      { name: 'NVIDIA RTX 4090', bandwidth: 64, power: 450, gflops: 1.32e6, category: 'personal', type: 'pcie', showLabel: false },
       { name: 'NVIDIA RTX 4080', bandwidth: 64, power: 320, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
       { name: 'NVIDIA RTX 3090Ti', bandwidth: 64, power: 400, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
       { name: 'NVIDIA RTX 3080Ti', bandwidth: 64, power: 350, gflops: null, category: 'personal', type: 'pcie', showLabel: false },
