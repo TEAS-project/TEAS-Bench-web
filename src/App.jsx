@@ -1635,6 +1635,23 @@ export default function App() {
             <Link to="/documentation" className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline">View Documentation</Link>
           </div>
           
+          {/* Justification / Explanation */}
+          <div className="bg-slate-800/50 rounded-lg p-3 mb-4 text-xs text-slate-300 leading-relaxed">
+            <p className="mb-2">
+              <span className="text-blue-400 font-semibold">X-axis (Power):</span> Power consumption directly correlates with operational cost and deployment constraints. 
+              It enables comparison across device classes—from edge devices (~10W) to datacenter systems (~10kW)—highlighting cost-efficiency trade-offs.
+            </p>
+            <p className="mb-2">
+              <span className="text-blue-400 font-semibold">Y-axis Options:</span> <span className="text-cyan-400">Bandwidth</span> shows theoretical memory throughput requirements for MoE inference at target SLO. 
+              <span className="text-cyan-400"> TPOT</span> (Time Per Output Token) measures decode latency—critical for streaming responses. 
+              <span className="text-cyan-400"> TTFT</span> (Time To First Token) measures prefill latency—critical for perceived responsiveness.
+            </p>
+            <p>
+              <span className="text-blue-400 font-semibold">Context Scenarios:</span> <span className="text-green-400">5K (4K+1K)</span> represents short-context tasks like GSM8K math problems. 
+              <span className="text-green-400"> 14K (13K+1K)</span> represents long-context tasks like LongBench-V2 document QA, where KV cache dominates memory bandwidth.
+            </p>
+          </div>
+          
           {/* Controls Row - Context Size and Parameters inline */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4">
             {/* Context Size */}
@@ -1845,6 +1862,11 @@ export default function App() {
                           {(yAxisType === 'ttft' && data.ttft !== undefined) && (
                           <div style={{ color: '#22d3ee', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
                             TTFT: {data.ttft?.toFixed(1)} ms
+                          </div>
+                          )}
+                          {(yAxisType === 'ttft' && !isReal && data.gflops) && (
+                          <div style={{ color: '#a78bfa', fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
+                            Compute Speed: {(data.gflops / 1e6).toFixed(2)} TFLOPS
                           </div>
                           )}
                           <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
