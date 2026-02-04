@@ -226,12 +226,119 @@ export default function Documentation() {
           </div>
         </div>
 
-        {/* Agentic AI Workflow Section */}
+        {/* Agentic Workflow Section */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-100 mb-6 pl-3 border-l-4 border-teal-500">Agentic AI Workflow</h2>
-          <p className="text-slate-400 leading-relaxed">
-            Documentation for Agentic AI Workflow benchmarks coming soon.
+          <h2 className="text-2xl font-bold text-slate-100 mb-6 pl-3 border-l-4 border-amber-500">Agentic Workflow</h2>
+          <p className="text-slate-400 leading-relaxed mb-6">
+            Benchmarks for agent-based AI workflows that involve multi-step reasoning, tool calling, and code execution.
+            These workloads test the ability of LLMs to solve complex tasks autonomously.
           </p>
+
+          <div className="space-y-6 pl-4 border-l-2 border-slate-700">
+            {/* Chart Description */}
+            <div>
+              <h3 className="text-xl font-semibold text-slate-200 mb-2">Accuracy vs Latency/Output Chart</h3>
+              <p className="leading-relaxed text-slate-400 mb-4">
+                The scatter plot visualizes the trade-off between accuracy and computational cost for agentic workflows.
+                Each point represents a benchmark run with a specific configuration.
+              </p>
+              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">X-Axis:</span>
+                  <span className="text-slate-400">Accuracy (%) — percentage of questions answered correctly</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">Y-Axis:</span>
+                  <span className="text-slate-400">Mean Latency per Question (seconds) or Mean Output Tokens per Question</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tool Modes */}
+            <div>
+              <h3 className="text-xl font-semibold text-slate-200 mb-3">Tool Modes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-500 text-2xl">●</span>
+                    <span className="text-green-500 font-semibold">No Tool</span>
+                  </div>
+                  <p className="text-slate-400 text-sm">
+                    Pure reasoning mode — the model solves problems using only its internal knowledge and reasoning capabilities, without access to external tools or code execution.
+                  </p>
+                </div>
+                
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-500 text-2xl">●</span>
+                    <span className="text-blue-500 font-semibold">Tool Call</span>
+                  </div>
+                  <p className="text-slate-400 text-sm">
+                    Agent mode with tool access — the model can call external tools (e.g., Python interpreter, calculators) to assist in solving problems. This typically increases latency but may improve accuracy on certain tasks.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Datasets */}
+            <div>
+              <h3 className="text-xl font-semibold text-slate-200 mb-3">Datasets</h3>
+              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-start gap-3">
+                  <span className="text-amber-400 font-semibold">IMO AnswerBench:</span>
+                  <span className="text-slate-400">
+                    International Mathematical Olympiad problems requiring advanced mathematical reasoning. 
+                    Tests the model's ability to solve competition-level math problems with or without computational tools.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics */}
+            <div>
+              <h3 className="text-xl font-semibold text-slate-200 mb-3">Metrics</h3>
+              <div className="space-y-3">
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                  <span className="text-slate-200 font-medium">Mean Latency per Question:</span>
+                  <span className="text-slate-400 ml-2">Average end-to-end time (in seconds) to generate a complete response for each question, including all reasoning steps and tool calls.</span>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                  <span className="text-slate-200 font-medium">Mean Output Tokens per Question:</span>
+                  <span className="text-slate-400 ml-2">Average number of tokens generated per question. Higher values indicate more verbose reasoning or multiple tool call iterations.</span>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                  <span className="text-slate-200 font-medium">Accuracy:</span>
+                  <span className="text-slate-400 ml-2">Percentage of questions answered correctly. Determined by exact match or majority voting across parallel samples.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Benchmark Configuration */}
+            <div>
+              <h3 className="text-xl font-semibold text-slate-200 mb-3">Benchmark Configuration</h3>
+              <p className="leading-relaxed text-slate-400 mb-4">
+                Current benchmarks use parallel sampling with majority voting to improve robustness:
+              </p>
+              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700 space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">Parallel Samples:</span>
+                  <span className="text-slate-400">8 independent attempts per question</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">Majority Threshold:</span>
+                  <span className="text-slate-400">4 (answer must appear in at least 4 samples to be selected)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">Temperature:</span>
+                  <span className="text-slate-400">1.0 (for diverse sampling)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium">Max New Tokens:</span>
+                  <span className="text-slate-400">16,384 tokens per response</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

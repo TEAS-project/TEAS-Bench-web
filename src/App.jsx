@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { BENCHMARK_ROWS } from './data/tts-benchmarks/index.js';
 import { TestTimeScalingSection } from './test-time-scaling.jsx';
+import { AgenticWorkflowSection } from './agentic-workload.jsx';
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4 ${className}`}>
@@ -1015,7 +1016,7 @@ export default function App() {
         engine: 'SGLang v0.5.8',
         batchSize: 1,
         power: 700,
-        ttft: 25.5, // ms (97.0 / 3.8)
+        ttft: 40.4, // ms
         color: '#ef4444', // red for real data
         showLabel: true,
       },
@@ -1706,7 +1707,7 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 text-xs sm:text-sm">
             <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">Mixture-of-Experts</a>
             <a href="#test-time-scaling" className="text-slate-300 hover:text-blue-400 transition-colors">Test Time Scaling</a>
-            <span className="text-slate-500 cursor-not-allowed hidden md:inline">Agentic AI Workflow <span className="text-xs text-slate-600">(Coming Soon)</span></span>
+            <a href="#agentic-workflow" className="text-slate-300 hover:text-blue-400 transition-colors">Agentic Workflow</a>
             <Link to="/documentation" className="text-slate-300 hover:text-blue-400 transition-colors">Documentation</Link>
             <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
           </div>
@@ -2493,6 +2494,8 @@ export default function App() {
               </table>
             </div>
           </Card>
+        </main>
+      </div>
 
         {/* Test Time Scaling Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6" id="test-time-scaling">
@@ -2514,8 +2517,26 @@ export default function App() {
           <TestTimeScalingSection />
         </div>
 
-      </main>
-      </div>
+        {/* Agentic Workflow Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6" id="agentic-workflow">
+          <header className="mb-6 sm:mb-8">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-400">
+                Agentic Workflow
+              </h1>
+              <button
+                onClick={() => document.getElementById('agentic-download-btn').click()}
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors shrink-0"
+                title="Download all agentic workflow benchmark data as CSV"
+              >
+                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download CSV</span>
+              </button>
+            </div>
+          </header>
+          <AgenticWorkflowSection />
+        </div>
+
     </div>
   );
 }
