@@ -1,6 +1,6 @@
   import { useMemo, useState, useEffect } from "react";
   import { Link } from "react-router-dom";
-  import { ArrowLeft } from "lucide-react";
+  import { ArrowLeft, Download } from "lucide-react";
   import {
     ResponsiveContainer,
     LineChart,
@@ -16,6 +16,68 @@
     LabelList,
   } from "recharts";
   import { BENCHMARK_ROWS } from "./data/tts-benchmarks/index.js";
+
+  // --- CSV Download Utilities ---
+  const escapeCSVField = (field) => {
+    if (field === null || field === undefined) return '';
+    const str = String(field);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const downloadCSV = (data, filename) => {
+    if (!data || data.length === 0) return;
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.map(escapeCSVField).join(','),
+      ...data.map(row => headers.map(h => escapeCSVField(row[h])).join(','))
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const getCurrentDateStr = () => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  };
+
+  // Export Test Time Scaling benchmark data
+  const exportTTSBenchmarkData = (rows, selection) => {
+    const dateStr = getCurrentDateStr();
+    const data = rows.map((row) => ({
+      date: dateStr,
+      benchmark: 'Test-Time-Scaling',
+      dataset: selection.dataset,
+      model: selection.model,
+      quantization: selection.quant,
+      inference_engine: selection.engine,
+      hardware: row.meta?.gpu || 'N/A',
+      gpu_count: row.meta?.gpuCount || 'N/A',
+      questions_per_hour: row.questionsPerHour,
+      accuracy_percent: row.accuracy || 'N/A',
+      sequential_steps: row.meta?.sequential || 'N/A',
+      parallel_branches: row.meta?.parallel || 'N/A',
+      samples_per_step: row.meta?.samples || 'N/A',
+      max_tokens: row.meta?.maxTokens || 'N/A',
+      tools: row.meta?.tools || 'N/A',
+    }));
+    
+    downloadCSV(data, `tts-${selection.model}-${selection.dataset}-benchmark-${dateStr}.csv`);
+  };
+
+
   /** --- Constants (outside the component) --- */
 
   const Card = ({ children, className = "" }) => (
@@ -195,151 +257,140 @@
   }
 
 
+  const ACCURACY_VS_QPH_CHART_DESCRIPTION = (
+    <>
+      Each datapoint represents a specific combination of sequential scaling (S), parallel scaling (P), and number of samples (N) per aggregation step.
+    </>
+  );
 
 
-
-  function AccuracyVsQphChartCard({ chartData }) {
+  function AccuracyVsQphChartCard({ chartData, embed }) {
     const hasData = chartData && chartData.length > 0;
 
+    const chartOnly = hasData ? (
+      <div className="h-[400px] sm:h-[500px] md:h-[600px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 10, right: 20, left: 30, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+
+            <XAxis
+              dataKey="questionsPerHour"
+              type="number"
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              label={{
+                value: "Questions per hour",
+                position: "insideBottom",
+                offset: -15,
+                fill: "#94a3b8",
+                fontSize: 12,
+              }}
+              domain={[0, (dataMax) => Math.max(1, Math.ceil(dataMax * 1.1))]}
+            />
+
+            <YAxis
+              dataKey="accuracy"
+              type="number"
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              label={{
+                value: "Accuracy (%)",
+                angle: -90,
+                position: "insideLeft",
+                offset: -5,
+                fill: "#94a3b8",
+                fontSize: 12,
+              }}
+              domain={[0, 100]}
+            />
+
+            <Tooltip
+              cursor={{ strokeDasharray: "3 3", stroke: "#64748b" }}
+              content={<BenchmarkTooltip />}
+            />
+
+            <Scatter data={chartData} name="Runs" isAnimationActive={false}>
+              <LabelList
+                content={(props) => {
+                  const { x, y, index } = props;
+                  const p = chartData[index];
+                  if (!p) return null;
+                  if (!p.showLabel) return null;
+
+                  const text = p.labelText ?? "";
+                  const dx = p.labelDx ?? 10;
+                  const dy = p.labelDy ?? -12;
+
+                  return (
+                    <g>
+                      <line
+                        x1={x}
+                        y1={y}
+                        x2={x + dx}
+                        y2={y + dy}
+                        stroke="#94a3b8"
+                        strokeWidth={1}
+                        opacity={0.6}
+                      />
+                      <rect
+                        x={x + dx - 2}
+                        y={y + dy - 15}
+                        width={Math.max(40, text.length * 7)}
+                        height={16}
+                        rx={3}
+                        fill="#0f172a"
+                        stroke="#334155"
+                        opacity={0.95}
+                      />
+                      <text
+                        x={x + dx + 4}
+                        y={y + dy - 2}
+                        fill="#e2e8f0"
+                        fontSize={11}
+                        fontWeight={600}
+                      >
+                        {text}
+                      </text>
+                    </g>
+                  );
+                }}
+              />
+              {chartData.map((p, i) => (
+                <Cell key={i} fill={p.color || "#3b82f6"} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    ) : (
+      <div className="text-sm text-slate-400">
+        No benchmark data found for this selection. Add a row to{" "}
+        <code className="text-slate-200">BENCHMARK_ROWS</code>.
+      </div>
+    );
+
+    // ✅ embed mode: return ONLY the plot (no Card wrapper)
+    if (embed) return chartOnly;
+
+    // default mode: return a full card with header + optional docs link
     return (
       <Card className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-lg font-semibold pl-2 border-l-4 border-blue-500">
-            Test-time Scaling – Accuracy vs Questions per Hour for various scaling settings
+            Accuracy–Performance Trade-off
             <br />
             <span className="font-normal text-slate-400 text-sm">
-              Each datapoint represents a specific combination of sequential and parallel scaling, and number of samples per aggregation step.
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              S=Sequential, P=Parallel, N=Number of samples
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              1- When given a task, the model is initially asked to generate P responses in parallel.
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              2.1- Next, randomly select a subset of N responses generated in step 1. Ask the model to reflect on their quality, and generate a new response.
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              2.2- Repeat step 2.1 P times to generate P new responses.
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              3- Repeat steps 2.1 and 2.2 for a total of S times. At each generation in a new stage, the N samples are drawn from the P responses from the previous stage.
-            </span>
-            <br />
-            <span className="font-normal text-slate-400 text-sm">
-              4- The final output is a single, final aggregated response at the end of the final stage.
+              {ACCURACY_VS_QPH_CHART_DESCRIPTION}
             </span>
           </h2>
-          
+
+          <Link
+            to="/documentation"
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors underline shrink-0"
+          >
+            View Documentation
+          </Link>
         </div>
 
-        {hasData ? (
-          <div className="h-[400px] sm:h-[500px] md:h-[600px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 20, left: 30, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-
-                <XAxis
-                  dataKey="questionsPerHour"
-                  type="number"
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
-                  label={{
-                    value: "Questions per hour",
-                    position: "insideBottom",
-                    offset: -15,
-                    fill: "#94a3b8",
-                    fontSize: 12,
-                  }}
-                  domain={[0, (dataMax) => Math.max(1, Math.ceil(dataMax * 1.1))]}
-                />
-
-                <YAxis
-                  dataKey="accuracy"
-                  type="number"
-                  tick={{ fill: "#94a3b8", fontSize: 11 }}
-                  label={{
-                    value: "Accuracy (%)",
-                    angle: -90,
-                    position: "insideLeft",
-                    offset: -5,
-                    fill: "#94a3b8",
-                    fontSize: 12,
-                  }}
-                  domain={[0, 100]}
-                />
-
-                <Tooltip
-                  cursor={{ strokeDasharray: "3 3", stroke: "#64748b" }}
-                  content={<BenchmarkTooltip />}
-                />
-
-                {/* ✅ render ALL points */}
-                <Scatter data={chartData} name="Runs" isAnimationActive={false}>
-                  <LabelList
-                    content={(props) => {
-                      const { x, y, index } = props;
-                      const p = chartData[index];
-                      if (!p) return null;
-
-                      // ✅ only label selected points (Pareto frontier)
-                      if (!p.showLabel) return null;
-
-                      const text = p.labelText ?? "";
-                      const dx = p.labelDx ?? 10;
-                      const dy = p.labelDy ?? -12;
-
-                      return (
-                        <g>
-                          <line
-                            x1={x}
-                            y1={y}
-                            x2={x + dx}
-                            y2={y + dy}
-                            stroke="#94a3b8"
-                            strokeWidth={1}
-                            opacity={0.6}
-                          />
-                          <rect
-                            x={x + dx - 2}
-                            y={y + dy - 15}
-                            width={Math.max(40, text.length * 7)}
-                            height={16}
-                            rx={3}
-                            fill="#0f172a"
-                            stroke="#334155"
-                            opacity={0.95}
-                          />
-                          <text
-                            x={x + dx + 4}
-                            y={y + dy - 2}
-                            fill="#e2e8f0"
-                            fontSize={11}
-                            fontWeight={600}
-                          >
-                            {text}
-                          </text>
-                        </g>
-                      );
-                    }}
-                  />
-                  {chartData.map((p, i) => (
-                    <Cell key={i} fill={p.color || "#3b82f6"} />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="text-sm text-slate-400">
-            No benchmark data found for this selection. Add a row to{" "}
-            <code className="text-slate-200">BENCHMARK_ROWS</code>.
-          </div>
-        )}
+        {chartOnly}
       </Card>
     );
   }
@@ -362,47 +413,6 @@
       (maxTokens == null || Number(r?.meta?.maxTokens) === Number(maxTokens))
     );
 
-  // Build [{ round: 1..16, cumulativeTimeSec: number }] from meta if present.
-  // Supports a few common spellings so you don't have to be super strict.
-  const buildCumulativeSeries = (row) => {
-    if (!row?.meta) return [];
-
-    const m = row.meta;
-
-    // Preferred: cumulative array length S (1..16)
-    const cum =
-      m.cumulativeTimeSecByRound ??
-      m.cumulative_time_sec_by_round ??
-      m.cumulative_time_by_round_sec ??
-      m.cum_time_s_by_round ??
-      null;
-
-    if (Array.isArray(cum) && cum.length) {
-      return cum.map((t, i) => ({
-        round: i + 1,
-        cumulativeTimeSec: Number(t),
-      }));
-    }
-
-    // Alternative: per-round time array -> we cum-sum it
-    const per =
-      m.timeSecByRound ??
-      m.time_sec_by_round ??
-      m.round_time_s ??
-      m.round_times_s ??
-      null;
-
-    if (Array.isArray(per) && per.length) {
-      let acc = 0;
-      return per.map((dt, i) => {
-        acc += Number(dt);
-        return { round: i + 1, cumulativeTimeSec: acc };
-      });
-    }
-
-    // Nothing usable (yet)
-    return [];
-  };
 
   // Small SVG triangle marker (upright)
   function TriangleDot(props) {
@@ -694,11 +704,24 @@
     dataset,
     setDataset,
     selectionLabel,
+    selection,
+    selectedRows,
   }) => (
     <div className="py-6 sm:py-8">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400">
-        Test Time Scaling
-      </h1>
+      <div className="flex flex-wrap justify-between items-start mb-2">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400">
+          Test Time Scaling
+        </h1>
+        <button
+          onClick={() => exportTTSBenchmarkData(selectedRows, selection)}
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors"
+          title="Download benchmark data as CSV"
+          disabled={selectedRows.length === 0}
+        >
+          <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Download CSV</span>
+        </button>
+      </div>
 
       <div className="inline-flex items-center px-2 py-1 mb-6 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">
         {selectionLabel}
@@ -743,6 +766,7 @@
       </div>
     </div>
   );
+
 
     const RVR_MODEL_OPTIONS = [
     // { value: "gpt-oss-120b-high", label: "GPT-OSS-120B (HIGH)" },
@@ -1118,6 +1142,8 @@
             dataset={dataset}
             setDataset={setDataset}
             selectionLabel={selectionLabel}
+            selection={selection}
+            selectedRows={selectedRows}
           />
 
           <ChartSection
