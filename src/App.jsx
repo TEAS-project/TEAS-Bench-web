@@ -2001,8 +2001,8 @@ export default function App() {
                       const isReal = data.context !== undefined;
                       const isPeak = data.type === 'peak';
                       const isDgx = data.name?.includes('DGX');
-                      // DGX Peak: green (#22c55e), DGX PCIe: lime (#84cc16), Single Peak: blue, Single PCIe: orange, Real: red
-                      const color = isReal ? '#ef4444' : (isDgx ? (isPeak ? '#22c55e' : '#84cc16') : (isPeak ? '#3b82f6' : '#f97316'));
+                      // DGX Peak: green (#22c55e), DGX PCIe: lime (#84cc16), Single Peak: blue, Single PCIe: orange, Real: use data.color
+                      const color = isReal ? (data.color || '#ef4444') : (isDgx ? (isPeak ? '#22c55e' : '#84cc16') : (isPeak ? '#3b82f6' : '#f97316'));
                       const typeLabel = isReal ? 'Real Benchmark' : (isPeak ? 'Peak BW (Memory)' : 'PCIe BW');
                       return (
                         <div style={{ backgroundColor: '#1e293b', border: `2px solid ${color}`, padding: '10px 14px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
@@ -2090,6 +2090,31 @@ export default function App() {
                 ifOverflow="extendDomain"
               />
               </>
+              )}
+
+              {/* Real benchmark data points - triangles for actual measured data (rendered first so circles appear on top) */}
+              {(yAxisType === 'tpot' || yAxisType === 'ttft') && (
+              <Scatter 
+                data={(yAxisType === 'tpot' ? REAL_BENCHMARK_DATA.tpot : REAL_BENCHMARK_DATA.ttft).filter(d => 
+                  d.model === selectedModel &&
+                  d.batchSize === batchSize && 
+                  ((scenario === '5k-ref' && d.context === '4k-1k') || (scenario === '14k-ref' && d.context === '13k-1k'))
+                )}
+                name="Measured (Real Benchmark)"
+                isAnimationActive={false}
+                shape={(props) => {
+                  const { cx, cy, payload } = props;
+                  const color = payload.color || '#ef4444';
+                  return (
+                    <polygon 
+                      points={`${cx},${cy-8} ${cx-7},${cy+6} ${cx+7},${cy+6}`}
+                      fill={color}
+                      stroke={color}
+                      strokeWidth={1}
+                    />
+                  );
+                }}
+              />
               )}
 
               {/* Device scatter points - blue circles for Peak Bandwidth (HBM/Memory) */}
@@ -2307,31 +2332,6 @@ export default function App() {
                   }}
                 />
               </Scatter>
-              )}
-
-              {/* Real benchmark data points - triangles for actual measured data */}
-              {(yAxisType === 'tpot' || yAxisType === 'ttft') && (
-              <Scatter 
-                data={(yAxisType === 'tpot' ? REAL_BENCHMARK_DATA.tpot : REAL_BENCHMARK_DATA.ttft).filter(d => 
-                  d.model === selectedModel &&
-                  d.batchSize === batchSize && 
-                  ((scenario === '5k-ref' && d.context === '4k-1k') || (scenario === '14k-ref' && d.context === '13k-1k'))
-                )}
-                name="Measured (Real Benchmark)"
-                isAnimationActive={false}
-                shape={(props) => {
-                  const { cx, cy, payload } = props;
-                  const color = payload.color || '#ef4444';
-                  return (
-                    <polygon 
-                      points={`${cx},${cy-8} ${cx-7},${cy+6} ${cx+7},${cy+6}`}
-                      fill={color}
-                      stroke={color}
-                      strokeWidth={1}
-                    />
-                  );
-                }}
-              />
               )}
               
             </ScatterChart>
