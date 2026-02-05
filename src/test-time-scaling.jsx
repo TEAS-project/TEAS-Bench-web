@@ -452,7 +452,7 @@ const padLogDomain = (pad = 1.12) => ([dataMin, dataMax]) => {
           Test-time Scaling -- Hardware Map (Power)
           <br />
           <span className="font-normal text-slate-400 text-sm">
-            X-axis: peak power (W). Y-axis: time taken per question (s).
+            X-axis: peak power (W). Y-axis: Time to Answer (s).
           </span>
         </h2>
       </div>
@@ -492,7 +492,7 @@ const padLogDomain = (pad = 1.12) => ([dataMin, dataMax]) => {
               tick={{ fill: "#94a3b8", fontSize: 11 }}
               tickFormatter={(v) => `${Math.round(v)}s`}
               label={{
-                value: "Time taken per question (s) [log]",
+                value: "Time to Answer (s) [log]",
                 angle: -90,
                 position: "insideLeft",
                 offset: -10,
@@ -787,6 +787,30 @@ export function RuntimeVsRoundsSection() {
           Runtime vs Rounds - Configuration
         </h2>
 
+
+        {/* Justification / Explanation */}
+        <div className="bg-slate-800/50 rounded-lg p-3 mb-4 text-xs text-slate-300 leading-relaxed">
+          <p className="mb-2">
+            <span className="text-blue-400 font-semibold">Motivation:</span> Test-Time Scaling (TTS) improves accuracy by spending more compute at inference time.
+            The most common techniques are sequential refinement and parallel sampling of solutions. They can also be combined.
+            The next chart visualizes the trade off between cost (power consumption) and latency (Time per Question).
+          </p>
+
+          <p className="mb-2">
+            <span className="text-blue-400 font-semibold">Scaling Settings:</span> We vary inference-time budget by changing 3 different knobs: 
+            Sequential rounds (Number of sequential refinement rounds), Parallel (number of generations at each round), and K samples (Number of samples to aggregate at each round)
+
+          </p>
+
+          <p className="mb-2">
+            <span className="text-blue-400 font-semibold">X-axis (Power):</span> Power consumed by each GPU
+          </p>
+
+          <p>
+            <span className="text-blue-400 font-semibold">Y-axis (Time to Answer):</span> End-to-end latency per question.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-3 sm:gap-4">
           <SelectControl label="Model" value={model} onChange={setModel} options={RVR_MODEL_OPTIONS} />
           <SelectControl label="Quantization" value={quant} onChange={setQuant} options={quantOptions} />
@@ -828,7 +852,7 @@ export function RuntimeVsRoundsSection() {
 
         {rsaRows.length === 0 && (
           <div className="mt-3 text-xs text-slate-400">
-            No matching RSA run found for these settings yet (chart will show axes only).
+            No matching run found for these settings yet (chart will show axes only).
           </div>
         )}
       </div>
