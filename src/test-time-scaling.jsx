@@ -797,8 +797,8 @@ export function RuntimeVsRoundsSection() {
           </p>
 
           <p className="mb-2">
-            <span className="text-blue-400 font-semibold">Scaling Settings:</span> We vary inference-time budget by changing 3 different knobs: 
-            Sequential rounds (Number of sequential refinement rounds), Parallel (number of generations at each round), and K samples (Number of samples to aggregate at each round)
+            <span className="text-blue-400 font-semibold">Scaling Settings:</span> We vary inference-time budget by changing 3 different knobs:  
+            <span className="text-cyan-400"> Sequential rounds</span> (Number of sequential refinement rounds), <span className="text-green-400">Parallel</span> (number of generations at each round), and <span className="text-blue-400">K samples</span> (Number of samples to aggregate at each round)
 
           </p>
 
