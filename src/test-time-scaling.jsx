@@ -449,7 +449,7 @@ const padLogDomain = (pad = 1.12) => ([dataMin, dataMax]) => {
     <Card className="mb-8">
       <div className="flex justify-between items-start mb-3">
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500">
-          Test-time Scaling -- Hardware Map (Power)
+          Test-time Scaling - Hardware Map Chart
           <br />
           <span className="font-normal text-slate-400 text-sm">
             X-axis: peak power (W). Y-axis: Time to Answer (s).
@@ -784,7 +784,7 @@ export function RuntimeVsRoundsSection() {
     <>
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-6">
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-4">
-          Runtime vs Rounds - Configuration
+          Test Time Scaling - Hardware Map Configuration
         </h2>
 
 
