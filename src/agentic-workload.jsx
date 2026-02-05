@@ -324,38 +324,6 @@ export function AgenticHardwareMapSection() {
           </ResponsiveContainer>
         </div>
       </Card>
-
-      {/* Summary Stats */}
-      <Card>
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Summary Statistics</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          {Object.entries(dataByDataset).map(([dataset, data]) => {
-            const avgAccuracy = data.reduce((s, d) => s + d.accuracy, 0) / data.length;
-            const avgLatency = data.reduce((s, d) => s + d.meanTime, 0) / data.length;
-            const modelList = [...new Set(data.map(d => d.modelShort))].join(', ');
-            const toolModeList = [...new Set(data.map(d => d.toolMode))].join(', ');
-            const displayName = DATASET_DISPLAY_NAMES[dataset] || dataset;
-            return (
-              <div key={dataset} className="bg-slate-700/50 rounded p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: DATASET_COLORS[dataset] }}
-                  />
-                  <span className="font-medium text-white text-xs">{displayName}</span>
-                </div>
-                <div className="text-slate-400 text-xs">
-                  <div>Model: {modelList}</div>
-                  <div>Tool Mode: {toolModeList || 'N/A'}</div>
-                  <div>Runs: {data.length}</div>
-                  <div>Avg Accuracy: <span className="text-green-400">{avgAccuracy.toFixed(1)}%</span></div>
-                  <div>Avg Time to Answer: {avgLatency.toFixed(1)}s</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
     </div>
   );
 }
