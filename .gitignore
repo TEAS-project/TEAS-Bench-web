@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local scratch / commented-out work
+src/test-time-scaling-commented-out.jsx

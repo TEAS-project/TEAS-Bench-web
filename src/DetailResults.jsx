@@ -539,7 +539,7 @@ function TTSTradeoffSection() {
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
         <div>
           <h3 className="text-lg font-semibold mb-2 pl-2 border-l-4 border-cyan-500">
-            Accuracy–Performance Trade-off
+            Accuracy - Performance Trade-off
           </h3>
           <p className="text-xs text-slate-400 pl-2">
             Each datapoint represents a specific combination of sequential scaling (S), parallel scaling (P), and samples (N).
@@ -666,7 +666,7 @@ export default function DetailResults() {
             Trade-off Plots
           </h1>
           <p className="text-base sm:text-lg text-slate-300 max-w-3xl">
-            Detailed trade-off analysis including CAP Radar plots for MoE models, Accuracy–Performance trade-off for Test Time Scaling, and Accuracy–Latency trade-off for Agentic Workflow.
+            Detailed trade-off analysis including CAP Radar plots for MoE models, Accuracy - Performance trade-off for Test Time Scaling, and Accuracy - Latency trade-off for Agentic Workflow.
           </p>
         </div>
       </div>
