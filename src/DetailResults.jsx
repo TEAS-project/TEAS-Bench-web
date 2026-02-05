@@ -9,6 +9,8 @@ import { Github, Download, ArrowLeft } from 'lucide-react';
 
 // Import TTS components and data
 import { BENCHMARK_ROWS } from './data/tts-benchmarks/index.js';
+// Import Agentic Trade-off Section
+import { AgenticTradeoffSection } from './agentic-workload.jsx';
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-slate-800 border border-slate-700 rounded-lg p-3 sm:p-4 ${className}`}>
@@ -661,10 +663,10 @@ export default function DetailResults() {
       <div className="bg-gradient-to-b from-slate-800 to-slate-900 py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400">
-            Detail Results
+            Trade-off Plots
           </h1>
           <p className="text-base sm:text-lg text-slate-300 max-w-3xl">
-            In-depth benchmark results including CAP Radar plots for MoE models and Accuracy–Performance trade-off analysis for Test Time Scaling.
+            Detailed trade-off analysis including CAP Radar plots for MoE models, Accuracy–Performance trade-off for Test Time Scaling, and Accuracy–Latency trade-off for Agentic Workflow.
           </p>
         </div>
       </div>
@@ -691,13 +693,23 @@ export default function DetailResults() {
         </section>
 
         {/* TTS Trade-off */}
-        <section>
+        <section className="mb-12">
           <div className="flex items-center gap-3 mb-6">
             <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-sky-400">
               Test Time Scaling
             </h2>
           </div>
           <TTSTradeoffSection />
+        </section>
+
+        {/* Agentic Workflow Trade-off */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-400">
+              Agentic Workflow
+            </h2>
+          </div>
+          <AgenticTradeoffSection />
         </section>
       </div>
     </div>

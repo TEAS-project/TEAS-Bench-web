@@ -1713,7 +1713,7 @@ export default function App() {
             <a href="#moe" className="text-slate-300 hover:text-blue-400 transition-colors">LLM Inference with MoE</a>
             <a href="#test-time-scaling" className="text-slate-300 hover:text-blue-400 transition-colors">Test Time Scaling</a>
             <a href="#agentic-workflow" className="text-slate-300 hover:text-blue-400 transition-colors">Agentic Workflow</a>
-            <Link to="/detail-results" className="text-slate-300 hover:text-blue-400 transition-colors">Detail Results</Link>
+            <Link to="/detail-results" className="text-slate-300 hover:text-blue-400 transition-colors">Trade-off Plots</Link>
             <Link to="/documentation" className="text-slate-300 hover:text-blue-400 transition-colors">Documentation</Link>
             <Link to="/team" className="text-slate-300 hover:text-blue-400 transition-colors">Team</Link>
           </div>
@@ -2380,6 +2380,9 @@ export default function App() {
               <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-400">
                 Agentic Workflow
               </h1>
+              <span className="px-2 py-0.5 bg-amber-900/50 border border-amber-700 rounded text-xs text-amber-400">
+                Under Construction
+              </span>
               <button
                 onClick={() => document.getElementById('agentic-download-btn').click()}
                 className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 rounded-full text-xs sm:text-sm text-white transition-colors shrink-0"
@@ -2388,6 +2391,12 @@ export default function App() {
                 <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Download CSV</span>
               </button>
+              <Link
+                to="/detail-results"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-purple-700 hover:bg-purple-600 border border-purple-600 rounded-full text-xs sm:text-sm text-white transition-colors shrink-0"
+              >
+                <span>Trade-off Plot</span>
+              </Link>
             </div>
           </header>
           <AgenticWorkflowSection />
