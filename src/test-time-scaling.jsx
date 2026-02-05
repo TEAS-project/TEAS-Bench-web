@@ -283,101 +283,105 @@ function HardwareTooltip({ active, payload }) {
 
 export const GPU_COLOR_MAP = {
   // ======================
-  // NVIDIA — Data Center
+  // NVIDIA (all NVIDIA = same color)
   // ======================
-  "H100-SXM":        "#0a7a2a", // darkest green (very high BW)
-  "H100-PCIe":       "#22c55e", // mid green
-  "A100-80G-SXM4":   "#4ade80", // lighter green
-  "A100-80G-PCIe":   "#86efac", // lightest green in A100s
-
-  // NVIDIA — Workstation / Prosumer
-  "A6000":           "#34d399", // green-teal
-  "A5000":           "#6ee7b7", // lighter green-teal
-
-  // NVIDIA — Personal (GeForce)
-  "5090":            "#15803d", // strong/dark green (high BW)
-  "4090":            "#16a34a", // dark green
-  "3090Ti":          "#22c55e", // mid green
-  "5080":            "#4ade80", // lighter green
-  "3080Ti":          "#86efac", // very light green
-  "4080":            "#a7f3d0", // extra light (lowest in this subset)
-
-  // NVIDIA — Autonomous (Jetson / Drive)
-  "Orin AGX":        "#0f766e", // teal (separate “autonomous” subfamily)
-  "Xavier AGX":      "#14b8a6",
-  "Orin NX":         "#2dd4bf",
-  "Jetson Nano":     "#99f6e4",
+  "H100-SXM":      "#22c55e",
+  "H100-PCIe":     "#22c55e",
+  "A100-80G-SXM4": "#22c55e",
+  "A100-80G-PCIe": "#22c55e",
+  "A6000":         "#22c55e",
+  "A5000":         "#22c55e",
+  "5090":          "#22c55e",
+  "4090":          "#22c55e",
+  "3090Ti":        "#22c55e",
+  "5080":          "#22c55e",
+  "3080Ti":        "#22c55e",
+  "4080":          "#22c55e",
+  "Orin AGX":      "#22c55e",
+  "Xavier AGX":    "#22c55e",
+  "Orin NX":       "#22c55e",
+  "Jetson Nano":   "#22c55e",
+  "DGX-H100":      "#22c55e",
+  "DGX-A100":      "#22c55e",
 
   // ======================
-  // AMD
+  // AMD (all AMD = same color)
   // ======================
-  "AMD MI300X":      "#dc2626", // strong red
+  "AMD MI300X":    "#dc2626",
 
   // ======================
-  // AWS / Trainium
+  // AWS / Trainium (all AWS = same color)
   // ======================
-  "AWS Trainium 2":  "#f97316", // orange
+  "AWS Trainium 2":"#f97316",
 
   // ======================
-  // Cerebras
+  // Cerebras (all Cerebras = same color)
   // ======================
-  "CS-2":            "#8b5cf6", // purple
-  "CS-3":            "#6d28d9", // darker purple (slightly “higher”)
+  "CS-2":          "#8b5cf6",
+  "CS-3":          "#8b5cf6",
 
   // ======================
-  // Apple Silicon (SoC)
+  // Apple Silicon (all Apple = same color)
   // ======================
-  "Apple M4 Max":    "#1d4ed8", // darkest blue (highest BW)
-  "Apple M3 Max":    "#3b82f6",
-  "Apple M2 Max":    "#60a5fa",
-  "Apple M1 Max":    "#93c5fd",
-
-  // ======================
-  // Data Center Systems
-  // ======================
-  "DGX-H100":        "#064e3b", // very dark green (system-level)
-  "DGX-A100":        "#14532d", // dark green (system-level)
+  "Apple M4 Max":  "#3b82f6",
+  "Apple M3 Max":  "#3b82f6",
+  "Apple M2 Max":  "#3b82f6",
+  "Apple M1 Max":  "#3b82f6",
 };
 
 
 
 function HardwareLegend({ points }) {
   const items = useMemo(() => {
-    const seen = new Set();
+    // group by color (since color == manufacturer in your map now)
+    const byColor = new Map();
 
-    // keep ordering stable (use points order)
-    const out = [];
     for (const p of points ?? []) {
       const gpu = p?.gpu;
-      const source = p?.source; // "measured" | "projected"
+      const source = p?.source;
       if (!gpu || !source) continue;
 
-      const key = `${gpu}__${source}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const color = GPU_COLOR_MAP[gpu] ?? "#94a3b8";
 
-      out.push({
-        gpu,
-        source,
-        color: GPU_COLOR_MAP[gpu] ?? "#94a3b8",
-      });
+      if (!byColor.has(color)) {
+        byColor.set(color, {
+          color,
+          hasMeasured: false,
+          // keep a sample GPU name only for manufacturer label inference
+          sampleGpu: gpu,
+        });
+      }
+
+      const entry = byColor.get(color);
+      if (source === "measured") entry.hasMeasured = true;
     }
 
-    // Optional: sort measured first, then projected; then alphabetically
-    out.sort((a, b) => {
-      const sa = a.source === "measured" ? 0 : 1;
-      const sb = b.source === "measured" ? 0 : 1;
+    // turn into array + stable sort (measured first, then by color string)
+    const out = Array.from(byColor.values()).sort((a, b) => {
+      const sa = a.hasMeasured ? 0 : 1;
+      const sb = b.hasMeasured ? 0 : 1;
       if (sa !== sb) return sa - sb;
-      return a.gpu.localeCompare(b.gpu);
+      return a.color.localeCompare(b.color);
     });
 
     return out;
   }, [points]);
 
+  // MANUAL manufacturer labels (no deduction helpers)
+  // Since you explicitly don’t want name-based heuristics, we hardcode by color.
+  const MANUFACTURER_LABEL_BY_COLOR = {
+    "#22c55e": "NVIDIA",
+    "#dc2626": "AMD",
+    "#f97316": "AWS / Trainium",
+    "#8b5cf6": "Cerebras",
+    "#3b82f6": "Apple",
+    "#94a3b8": "Other / Unknown",
+  };
+
   if (!items.length) {
     return (
       <div className="text-xs text-slate-400">
-        Color = GPU type • Shape = data source
+        Color = manufacturer • Shape = data source
       </div>
     );
   }
@@ -385,12 +389,13 @@ function HardwareLegend({ points }) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-300">
       {items.map((it) => {
-        const isMeasured = it.source === "measured";
+        const label = MANUFACTURER_LABEL_BY_COLOR[it.color] ?? "Other / Unknown";
+        const isMeasured = it.hasMeasured;
+
         return (
-          <div key={`${it.gpu}-${it.source}`} className="flex items-center gap-2">
+          <div key={it.color} className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
               {isMeasured ? (
-                // triangle
                 <path
                   d="M 8 2 L 2.5 13.5 L 13.5 13.5 Z"
                   fill={it.color}
@@ -398,7 +403,6 @@ function HardwareLegend({ points }) {
                   strokeWidth="1"
                 />
               ) : (
-                // circle
                 <circle
                   cx="8"
                   cy="8"
@@ -411,7 +415,7 @@ function HardwareLegend({ points }) {
             </svg>
 
             <span>
-              {it.gpu}{" "}
+              {label}{" "}
               <span className="text-slate-400">
                 ({isMeasured ? "Measured" : "Projected"})
               </span>
@@ -421,7 +425,7 @@ function HardwareLegend({ points }) {
       })}
 
       <div className="text-slate-400">
-        Color = GPU type • Shape = data source
+        Color = manufacturer • Shape = data source
       </div>
     </div>
   );
@@ -542,7 +546,49 @@ function RuntimeVsPowerChartCard({ points }) {
                 return <Dot {...props} stroke={stroke} fill={stroke} />;
               }}
               isAnimationActive={false}
-            />
+            >
+              <LabelList
+                content={(props) => {
+                  
+                  const { x, y, index } = props;
+                  const p = (points ?? [])[index];
+                  if (!p?.gpu) return null;
+
+                  // only label selected GPUs
+                  if (!shouldLabel(p.gpu)) return null;
+
+                  const { dx, dy, anchor } = getLabelOffset(p.gpu);
+                  const color = GPU_COLOR_MAP[p.gpu] ?? "#94a3b8";
+
+                  return (
+                    <>
+                      {/* connector */}
+                      <line
+                        x1={x}
+                        y1={y}
+                        x2={x + dx}
+                        y2={y + dy}
+                        stroke={color}
+                        strokeWidth={1}
+                        strokeDasharray="2,2"
+                        opacity={0.6}
+                      />
+                      {/* label */}
+                      <text
+                        x={x + dx}
+                        y={y + dy}
+                        fill={color}
+                        fontSize={10}
+                        fontWeight={600}
+                        textAnchor={anchor}
+                      >
+                        {p.gpu}
+                      </text>
+                    </>
+                  );
+                }}
+              />
+            </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
       </div>
@@ -783,7 +829,7 @@ export function RuntimeVsRoundsSection() {
           source,
           peakBandwidth: bw,
           // baseMeasuredGpu: h100Spec.name,
-          baseMeasuredTimeSec: measuredTimeSec,
+          // baseMeasuredTimeSec: measuredTimeSec,
           meta: measuredRow.meta,
         };
       });
