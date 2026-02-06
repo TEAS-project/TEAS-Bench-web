@@ -2885,7 +2885,7 @@ export default function App() {
                 Measuring not only <strong>performance</strong>, but also <strong>costs</strong> and <strong>accuracy</strong>, to study their complex trade-offs.
               </li>
               <li>
-                Providing analytical models to <strong>forecast performance</strong> in new hardware.
+                Providing analytical models to <strong>forecast best-case performance</strong> in new hardware.
               </li>
             </ul>
             This is facilitated by a broad team with extensive expertise in AI based at the{' '}
