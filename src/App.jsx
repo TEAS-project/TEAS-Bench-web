@@ -3250,7 +3250,7 @@ export default function App() {
                   const color = payload.color || '#ef4444';
                   return (
                     <polygon 
-                      points={`${cx},${cy-8} ${cx-7},${cy+6} ${cx+7},${cy+6}`}
+                      points={`${cx},${cy-6} ${cx-5},${cy+5} ${cx+5},${cy+5}`}
                       fill={color}
                       stroke={color}
                       strokeWidth={1}
