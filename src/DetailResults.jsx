@@ -452,14 +452,6 @@ function TTSTradeoffSection() {
     }
   }, [quantOptions, ttsQuant]);
 
-  const selectionLabel = useMemo(() => {
-    const m = TTS_MODEL_OPTIONS.find((o) => o.value === ttsModel)?.label ?? ttsModel;
-    const e = TTS_ENGINE_OPTIONS.find((o) => o.value === ttsEngine)?.label ?? ttsEngine;
-    const q = TTS_QUANT_OPTIONS.find((o) => o.value === ttsQuant)?.label ?? ttsQuant;
-    const d = TTS_DATASET_OPTIONS.find((o) => o.value === dataset)?.label ?? dataset;
-    return `${m} / ${q} / ${d} / ${e}`;
-  }, [ttsModel, ttsEngine, ttsQuant, dataset]);
-
   const selection = useMemo(
     () => ({ model: ttsModel, quant: ttsQuant, dataset, engine: ttsEngine }),
     [ttsModel, ttsQuant, dataset, ttsEngine]
@@ -560,10 +552,6 @@ function TTSTradeoffSection() {
         <SelectControl label="Quantization" value={ttsQuant} onChange={setTtsQuant} options={quantOptions} />
         <SelectControl label="Dataset" value={dataset} onChange={setDataset} options={TTS_DATASET_OPTIONS} />
         <SelectControl label="Inference Engine" value={ttsEngine} onChange={setTtsEngine} options={TTS_ENGINE_OPTIONS} />
-      </div>
-
-      <div className="inline-flex items-center px-2 py-1 mb-4 bg-slate-700/50 border border-slate-600 rounded text-xs text-slate-300">
-        {selectionLabel}
       </div>
 
       {chartData.length > 0 ? (

@@ -480,7 +480,7 @@ function RuntimeVsPowerChartCard({ points }) {
 
   return (
     <>
-      <div className="mt-6">
+      <div className="mt-6 bg-slate-900 border border-slate-700 rounded px-3 py-2">
         <HardwareLegend points={points} />
       </div>
 
@@ -834,15 +834,6 @@ export function RuntimeVsRoundsSection() {
     return pts;
   }, [rsaRows]);
 
-  const selectionLabel = useMemo(() => {
-    const m = RVR_MODEL_OPTIONS.find((o) => o.value === model)?.label ?? model;
-    const e = RVR_ENGINE_OPTIONS.find((o) => o.value === engine)?.label ?? engine;
-    const q = RVR_QUANT_OPTIONS.find((o) => o.value === quant)?.label ?? quant;
-    const d = RVR_DATASET_OPTIONS.find((o) => o.value === dataset)?.label ?? dataset;
-    const kLabel = samples === SAMPLES_NONE_VALUE ? "None" : samples;
-    return `${m} / ${q} / ${d} / ${e} / Seq=${sequential} / P=${parallel} / K=${kLabel}`;
-  }, [model, quant, dataset, engine, parallel, samples, sequential]);
-
   const quantOptions = useMemo(() => buildRvrQuantOptionsForModel(model), [model]);
 
   return (
@@ -909,10 +900,6 @@ export function RuntimeVsRoundsSection() {
             onChange={setMaxTokens}
             options={MAXTOKENS_OPTIONS_DYNAMIC}
           />
-        </div>
-
-        <div className="inline-flex items-center px-2 py-1 mt-3 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">
-          {selectionLabel}
         </div>
 
         {rsaRows.length === 0 && (

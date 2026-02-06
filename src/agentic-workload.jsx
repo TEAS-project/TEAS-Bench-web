@@ -395,7 +395,7 @@ export function AgenticTradeoffSection() {
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
         <div>
           <h3 className="text-lg font-semibold mb-2 pl-2 border-l-4 border-amber-500">
-            Accuracy vs Time-to-Answer Trade-off
+            Accuracy–Performance Trade-off
           </h3>
           <p className="text-xs text-slate-400 pl-2">
             Each datapoint represents a benchmark run with specific configuration.
