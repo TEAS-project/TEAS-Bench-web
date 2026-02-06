@@ -2859,19 +2859,16 @@ export default function App() {
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-slate-800 to-slate-900 py-8 sm:py-12 md:py-16 px-4 sm:px-6">
+      <div className="bg-gradient-to-b from-slate-800 to-slate-900 pt-8 sm:pt-12 md:pt-16 pb-2 sm:pb-4 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 md:mb-8 pb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400" style={{ lineHeight: '1.2' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 pb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-400" style={{ lineHeight: '1.2' }}>
             Tracking Evolving AI and Systems
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto px-2">
-            Uniting Models, Algorithms, and System Innovators with Top-Down Evolutionary Benchmarks.
-          </p>
         </div>
       </div>
 
       {/* Our Goal Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-6 sm:pb-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 sm:p-6 md:p-8 mb-8 sm:mb-12">
           <h2 className="text-2xl font-bold text-slate-100 mb-4">Our Goal</h2>
           <p className="text-slate-300 leading-relaxed">
@@ -2879,7 +2876,7 @@ export default function App() {
             <ul className="list-disc list-inside pl-4 space-y-1 text-slate-300">
               <li>
                 Focusing on frontier AI inference including <strong>sparse</strong>, <strong>reasoning</strong>, and <strong>agentic models</strong>.
-                  These pose unique challenges for benchmarking as they involve sparse activations, memory-bound generation, heterogeneous hardware, and dynamic workflows.
+                  These pose unique challenges for benchmarking as they involve sparse activations, memory-bandwidth-bound generation, heterogeneous hardware, and dynamic workflows.
               </li>
               <li>
                 Measuring not only <strong>performance</strong>, but also <strong>costs</strong> and <strong>accuracy</strong>, to study their complex trade-offs.
