@@ -846,7 +846,7 @@ export function RuntimeVsRoundsSection() {
     <Card className="mb-8">
       <div>
         <h2 className="text-lg font-semibold pl-2 border-l-4 border-cyan-500 mb-4">
-          Test Time Scaling - Hardware Map
+          Hardware Map
         </h2>
 
 
