@@ -12,8 +12,8 @@ export const HARDWARE_SPECS = [
   { name: "H200-SXM", category: "Data Center Cards", peakBandwidth: 4800, pciBandwidth: 128, memory: 141, peakGFLOPS: 9.90e5, peakPower: 700 },
   { name: "AMD MI300X", category: "Data Center Cards", peakBandwidth: 5300, pciBandwidth: 128, memory: 192, peakGFLOPS: null, peakPower: 750 },
   { name: "AWS Trainium 2", category: "Data Center Cards", peakBandwidth: 2900, pciBandwidth: 128, memory: 96, peakGFLOPS: null, peakPower: 1200 },
-  { name: "CS-2", category: "Data Center Cards", peakBandwidth: 20000000, pciBandwidth: 12.5, memory: 40, peakGFLOPS: null, peakPower: 23000 },
-  { name: "CS-3", category: "Data Center Cards", peakBandwidth: 21000000, pciBandwidth: 12.5, memory: 44, peakGFLOPS: null, peakPower: 23000 },
+  //{ name: "CS-2", category: "Data Center Cards", peakBandwidth: 20000000, pciBandwidth: 12.5, memory: 40, peakGFLOPS: null, peakPower: 23000 },
+  //{ name: "CS-3", category: "Data Center Cards", peakBandwidth: 21000000, pciBandwidth: 12.5, memory: 44, peakGFLOPS: null, peakPower: 23000 },
 
   // Personal GPUs
   { name: "5090", category: "Personal", peakBandwidth: 1790, pciBandwidth: 128, memory: 32, peakGFLOPS: 1.68e6, peakPower: 575 },

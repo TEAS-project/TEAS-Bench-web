@@ -349,23 +349,30 @@ function HardwareLegend({ points }) {
         byColor.set(color, {
           color,
           hasMeasured: false,
-          // keep a sample GPU name only for manufacturer label inference
+          hasProjected: false,
           sampleGpu: gpu,
         });
       }
 
       const entry = byColor.get(color);
       if (source === "measured") entry.hasMeasured = true;
+      if (source === "projected") entry.hasProjected = true;
     }
 
     // turn into array + stable sort (measured first, then by color string)
-    const out = Array.from(byColor.values()).sort((a, b) => {
+    const sorted = Array.from(byColor.values()).sort((a, b) => {
       const sa = a.hasMeasured ? 0 : 1;
       const sb = b.hasMeasured ? 0 : 1;
       if (sa !== sb) return sa - sb;
       return a.color.localeCompare(b.color);
     });
 
+    // build flat list: for each color, triangle (Measured) then circle (Projected)
+    const out = [];
+    for (const it of sorted) {
+      if (it.hasMeasured) out.push({ ...it, shape: "triangle", isMeasured: true });
+      if (it.hasProjected) out.push({ ...it, shape: "circle", isMeasured: false });
+    }
     return out;
   }, [points]);
 
@@ -390,14 +397,15 @@ function HardwareLegend({ points }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-300">
-      {items.map((it) => {
-        const label = MANUFACTURER_LABEL_BY_COLOR[it.color] ?? "Other / Unknown";
-        const isMeasured = it.hasMeasured;
+      {items.map((it, idx) => {
+        const manufacturer = MANUFACTURER_LABEL_BY_COLOR[it.color] ?? "Other / Unknown";
+        const suffix = it.shape === "triangle" ? "Measured" : "Projected";
+        const label = `${manufacturer} (${suffix})`;
 
         return (
-          <div key={it.color} className="flex items-center gap-2">
+          <div key={`${it.color}-${it.shape}-${idx}`} className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              {isMeasured ? (
+              {it.shape === "triangle" ? (
                 <path
                   d="M 8 2 L 2.5 13.5 L 13.5 13.5 Z"
                   fill={it.color}
@@ -416,12 +424,7 @@ function HardwareLegend({ points }) {
               )}
             </svg>
 
-            <span>
-              {label}{" "}
-              <span className="text-slate-400">
-                ({isMeasured ? "Measured" : "Projected"})
-              </span>
-            </span>
+            <span>{label}</span>
           </div>
         );
       })}
@@ -495,7 +498,7 @@ function RuntimeVsPowerChartCard({ points }) {
               tick={{ fill: "#94a3b8", fontSize: 11 }}
               tickFormatter={(v) => `${v}W`}
               label={{
-                value: "Peak power (W) [log]",
+                value: "Power (W)",
                 position: "insideBottom",
                 offset: -15,
                 fill: "#94a3b8",
@@ -512,7 +515,7 @@ function RuntimeVsPowerChartCard({ points }) {
               tick={{ fill: "#94a3b8", fontSize: 11 }}
               tickFormatter={(v) => `${Math.round(v)}s`}
               label={{
-                value: "Time to Answer (s) [log]",
+                value: "Time to Answer (s)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -10,
@@ -541,7 +544,7 @@ function RuntimeVsPowerChartCard({ points }) {
             >
               <LabelList
                 content={(props) => {
-                  
+
                   const { x, y, index } = props;
                   const p = (points ?? [])[index];
                   if (!p?.gpu) return null;
@@ -855,17 +858,17 @@ export function RuntimeVsRoundsSection() {
           <p className="mb-2">
             <span className="text-blue-400 font-semibold">Motivation:</span> Test-Time Scaling (TTS) improves accuracy by spending more compute at inference time.
             The most common techniques are sequential refinement and parallel sampling of solutions. They can also be combined.
-            The next chart visualizes the trade off between cost (power consumption) and latency (Time per Question).
+            The next chart visualizes the trade off between operational cost (power consumption) and latency (Time to Answer).
           </p>
 
           <p className="mb-2">
-            <span className="text-blue-400 font-semibold">Scaling Settings:</span> We vary inference-time budget by changing 3 different knobs:  
-            <span className="text-cyan-400"> Sequential rounds</span> (Number of sequential refinement rounds), <span className="text-green-400">Parallel</span> (Number of generations at each round), and <span className="text-blue-400">K samples</span> (Number of samples to aggregate at each round).
+            <span className="text-blue-400 font-semibold">Scaling Settings:</span> We vary inference-time budget by changing 3 different knobs:
+            <span className="text-cyan-400"> Sequential rounds</span> (number of sequential refinement rounds), <span className="text-green-400">Parallel</span> (number of generations at each round), and <span className="text-blue-400">K samples</span> (number of samples to aggregate at each round).
 
           </p>
 
           <p className="mb-2">
-            <span className="text-blue-400 font-semibold">X-axis (Power):</span> Power consumed by each GPU.
+            <span className="text-blue-400 font-semibold">X-axis (Power):</span> Power consumed by each hardware.
           </p>
 
           <p>

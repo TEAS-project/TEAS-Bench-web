@@ -112,7 +112,7 @@ const HardwareMapTooltip = ({ active, payload }) => {
 export function AgenticHardwareMapSection() {
   // Filter states
   const [selectedDataset, setSelectedDataset] = useState('all');
-  const [selectedModel, setSelectedModel] = useState('all');
+  const [selectedModel, setSelectedModel] = useState('GPT-OSS-120B');
   const [selectedToolMode, setSelectedToolMode] = useState('all');
 
   const datasets = useMemo(() => getUniqueDatasets(), []);
@@ -193,7 +193,7 @@ export function AgenticHardwareMapSection() {
           </p>
           <p className="mb-2">
             <span className="text-blue-400 font-semibold">Tool Call vs No Tool:</span> We benchmark both modes to quantify the accuracy-latency trade-off. 
-            Tool calls (e.g., Python execution) can significantly improve answer accuracy on complex reasoning tasks, but introduce additional latency. 
+            Tool calls (e.g., Python execution) can significantly improve answer accuracy on complex reasoning tasks, but introduce additional latency and CPU power demand. 
             Comparing both modes reveals when tool-augmented inference is worth the overhead.
           </p>
           <p className="mb-2">
@@ -282,7 +282,7 @@ export function AgenticHardwareMapSection() {
                 stroke="#94a3b8"
                 tickFormatter={(v) => `${v.toFixed(0)}s`}
                 label={{ 
-                  value: 'Time to Answer (s) [log]', 
+                  value: 'Time to Answer (s)', 
                   angle: -90, 
                   position: 'insideLeft',
                   offset: -45,

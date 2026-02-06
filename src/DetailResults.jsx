@@ -227,7 +227,7 @@ function CAPRadarSection() {
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
         <div>
           <h3 className="text-lg font-semibold mb-2 pl-2 border-l-4 border-purple-500">
-            CAP Radar Plot - Cost, Accuracy, Performance
+            Cost–Accuracy–Performance Trade-off
           </h3>
           <p className="text-xs text-slate-400 pl-2">
             Empirical evaluation across diverse model and system configurations.
@@ -286,7 +286,7 @@ function CAPRadarSection() {
           <RadarChart data={radarData.radarData} cx="50%" cy="50%" outerRadius="70%">
             <PolarGrid stroke="#334155" />
             <PolarAngleAxis dataKey="metric" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 10 }} />
+            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
             {radarData.selectedConfigs.map((config, idx) => (
               <Radar
                 key={config.key}
@@ -665,8 +665,10 @@ export default function DetailResults() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400">
             Trade-off Plots
           </h1>
-          <p className="text-base sm:text-lg text-slate-300 max-w-3xl">
-            Detailed trade-off analysis including CAP Radar plots for MoE models, Accuracy - Performance trade-off for Test Time Scaling, and Accuracy - Latency trade-off for Agentic Workflow.
+          <p className="text-base sm:text-lg text-slate-300 max-w-8xl">
+            Detailed analysis of trade-offs between Cost (C), Accuracy (A), and Performance (P). 
+            <br />
+            This includes CAP radar plots for sparse MoE models, and AP scatterplots for Test Time Scaling and Agentic Workflows.
           </p>
         </div>
       </div>

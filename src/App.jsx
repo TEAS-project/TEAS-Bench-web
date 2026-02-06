@@ -2876,7 +2876,7 @@ export default function App() {
             <ul className="list-disc list-inside pl-4 space-y-1 text-slate-300">
               <li>
                 Focusing on frontier AI inference including <strong>sparse</strong>, <strong>reasoning</strong>, and <strong>agentic models</strong>.
-                  These pose unique challenges for benchmarking as they involve sparse activations, memory-bandwidth-bound generation, heterogeneous hardware, and dynamic workflows.
+                  These pose unique challenges for benchmarking as they involve sparse activations, memory-bound generation, heterogeneous hardware, and dynamic workflows.
               </li>
               <li>
                 Measuring not only <strong>performance</strong>, but also <strong>costs</strong> and <strong>accuracy</strong>, to study their complex trade-offs.
@@ -2928,9 +2928,6 @@ export default function App() {
             >
               <span>CAP Radar</span>
             </Link>
-            <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-400 hidden sm:inline">
-              {MODEL_CONFIG.name}
-            </span>
           </div>
         </header>
 
@@ -2952,8 +2949,8 @@ export default function App() {
             </p>
             <p className="mb-2">
               <span className="text-blue-400 font-semibold">Y-axis Options:</span> <span className="text-cyan-400">Bandwidth</span> shows memory throughput requirements for MoE inference at target SLO. 
-              <span className="text-cyan-400"> TPOT</span> (Time Per Output Token) measures decode latency—bandwidth-bound since each decode step loads model weights plus the accumulated KV cache from all prior tokens. 
-              <span className="text-cyan-400"> TTFT</span> (Time To First Token) measures prefill latency—compute-bound for short contexts, but memory-bound for long contexts due to KV cache writes.
+              <span className="text-cyan-400"> TPOT</span> (Time Per Output Token) measures decode latency, which is bandwidth-bound since each decode step loads model weights plus the accumulated KV cache from all prior tokens. 
+              <span className="text-cyan-400"> TTFT</span> (Time To First Token) measures prefill latency, which is compute-bound for short contexts, but memory-bound for long contexts due to KV cache writes.
             </p>
             <p className="mb-2">
               <span className="text-blue-400 font-semibold">Context Scenarios:</span> <span className="text-green-400">5K (4K+1K)</span> represents short-context tasks like GSM8K, where model weights dominate memory access. 
@@ -3047,28 +3044,36 @@ export default function App() {
             )}
           </div>
           
-          {/* Point Legend - own row, full width, horizontal so entries stay on one line */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-slate-900 border border-slate-700 rounded px-3 py-2 mb-4">
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0"></div>
-              <span className="text-xs text-slate-300 whitespace-nowrap">Peak Bandwidth (Memory) Estimate</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-orange-500 shrink-0"></div>
-              <span className="text-xs text-slate-300 whitespace-nowrap">PCIe Bandwidth (Offloading) Estimate</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-green-500 shrink-0"></div>
-              <span className="text-xs text-slate-300 whitespace-nowrap">Multi-GPU Systems (Peak) Estimate</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-lime-400 shrink-0"></div>
-              <span className="text-xs text-slate-300 whitespace-nowrap">Multi-GPU Systems (PCIe) Estimate</span>
+          {/* Point Legend - dots on first line, triangles on second line */}
+          <div className="flex flex-col gap-2 bg-slate-900 border border-slate-700 rounded px-3 py-2 mb-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0"></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">Peak Bandwidth (Memory) Estimate</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-orange-500 shrink-0"></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">PCIe Bandwidth (Offloading) Estimate</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-green-500 shrink-0"></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">Multi-GPU Systems (Peak) Estimate</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-lime-400 shrink-0"></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">Multi-GPU Systems (PCIe) Estimate</span>
+              </div>
             </div>
             {(yAxisType === 'tpot' || yAxisType === 'ttft') && (
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-red-500 shrink-0"></div>
-              <span className="text-xs text-slate-300 whitespace-nowrap">Measured (Real Benchmark)</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 border-t border-slate-700">
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent shrink-0" style={{ borderBottomColor: '#ef4444' }}></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">Measured (SGLang)</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent shrink-0" style={{ borderBottomColor: '#6366f1' }}></div>
+                <span className="text-xs text-slate-300 whitespace-nowrap">Measured (vLLM)</span>
+              </div>
             </div>
             )}
           </div>
